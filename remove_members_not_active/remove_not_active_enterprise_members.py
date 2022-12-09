@@ -167,7 +167,7 @@ def check_data(token, ps):
         d = f.readlines()
         for i in d:
             uri = "https://api.gitee.com/enterprises/5292411/members/%s/events" % i.split(",")[2]
-            p = {"access_token": "8adea3ee889dcef5fd516bfb5421c639", "limit": 200}
+            p = {"access_token": "8adea3ee889dcef5fd516bfb5421c639", "limit": 300}
             res = requests.get(url=uri, params=p)
     
             if res.status_code != 200:
