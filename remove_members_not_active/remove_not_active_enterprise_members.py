@@ -162,14 +162,31 @@ def write():
                     ff.writelines(d)
 
 
-def read_and_remove(token, ps):
+def check_data(token, ps):
     with open("./remove_list.txt", "r", encoding="utf-8") as f:
         d = f.readlines()
         for i in d:
-            remove_url = "https://api.gitee.com/enterprises/5292411/members/%s" % i.split(",")[2]
-            res = requests.delete(url=remove_url, params={"access_token": token, "password": ps})
-            if res.status_code != 204:
-                continue
+            uri = "https://api.gitee.com/enterprises/5292411/members/%s/events" % i.split(",")[2]
+            p = {"access_token": "8adea3ee889dcef5fd516bfb5421c639", "limit": 200}
+            res = requests.get(url=uri, params=p)
+    
+            if res.status_code != 200:
+                print("code is ", res.status_code)
+    
+            for r in res.json().get("data"):
+                if r.get("action") not in ["kick_out", "left", "be_left"]:
+                    if r.get("created_at").split("T")[0] == i.split(",")[4]:
+                        remove(token, ps, i.split(",")[2])
+                    else:
+                        print(i.split(",")[2], i.split(",")[4], r.get("created_at"))
+                        break
+
+
+def remove(token, ps, uid):
+    remove_url = "https://api.gitee.com/enterprises/5292411/members/%s" % uid
+    res = requests.delete(url=remove_url, params={"access_token": token, "password": ps})
+    if res.status_code != 204:
+        requests.delete(url=remove_url, params={"access_token": token, "password": ps})
 
 
 def get_needed_to_remove_enterprise_member_information(eid: int, not_work_members_ids_dict: dict, v8_token: str):
@@ -254,7 +271,7 @@ def main():
     write_member_to_csv(inf)
 
     write()
-    # read_and_remove(v8_token, password)
+    # check_data(v8_token, password)
 
 
 if __name__ == '__main__':
