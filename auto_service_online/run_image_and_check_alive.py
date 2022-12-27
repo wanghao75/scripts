@@ -14,7 +14,7 @@ def pull_image_from_swr(image: str):
 
 
 def use_kubectl_to_deploy_project():
-    work = os.popen("kubectl apply -f deploy.yaml")
+    work = os.popen("kubectl apply -f deploy.yaml --kubeconfig test-cluster-deploy-workspace")
     for op in work.readlines():
         if not op.endswith("created"):
             print("apply pod to cluster failed")
@@ -24,7 +24,7 @@ def use_kubectl_to_deploy_project():
 
 def check_pods_alive(ns, pj):
     alive = False
-    for line in os.popen("kubectl get pods --namespace %s | grep %s | grep -v 'grep'" % (ns, pj)).readlines():
+    for line in os.popen("kubectl get pods --namespace %s --kubeconfig test-cluster-deploy-workspace | grep %s | grep -v 'grep'" % (ns, pj)).readlines():
         if line.__contains__("RUNNING"):
             alive = True
             break
@@ -92,6 +92,11 @@ def feed_back_to_pr(response_pr: bool, reason: str, t: str, o: str, r: str, n: s
         requests.post(url=github_api, headers=headers, data=data)
 
 
+def clean_up_work_space():
+    os.remove("kubectl-yaml-creator")
+    os.remove("output")
+
+
 def main():
     ghub_token = sys.argv[1]
     org = sys.argv[2]
@@ -108,17 +113,18 @@ def main():
     pull_status = pull_image_from_swr(os.getenv("IMAGE_ID"))
     if not pull_status:
         feed_back_to_pr(True, "because docker pull image failed", ghub_token, org, repo, number)
-    
+
     # deploy to test cluster
     deploy_status = use_kubectl_to_deploy_project()
     if not deploy_status:
         feed_back_to_pr(True, "because apply project to cluster failed", ghub_token, org, repo, number)
-    
+
     # check pods alive
     status = check_pods_alive(os.getenv("NAMESPACE"), os.getenv("PROJECT"))
     if status:
         prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, os.getenv("COMMUNITY"))
-    
+        clean_up_work_space()
+
     else:
         feed_back_to_pr(True, "because prepare to submit a pr to production environment failed", ghub_token, org, repo, number)
 
