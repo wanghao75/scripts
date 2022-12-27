@@ -169,16 +169,18 @@ def check_data(token, ps):
             uri = "https://api.gitee.com/enterprises/5292411/members/%s/events" % i.split(",")[2]
             p = {"access_token": token, "limit": 300}
             res = requests.get(url=uri, params=p)
-    
+
             if res.status_code != 200:
                 print("code is ", res.status_code)
-    
+                continue
+
             for r in res.json().get("data"):
                 if r.get("action") not in ["kick_out", "left", "be_left"]:
                     if r.get("created_at").split("T")[0] == i.split(",")[4]:
                         remove(token, ps, i.split(",")[2])
+                        break
                     else:
-                        print(i.split(",")[2], i.split(",")[4], r.get("created_at"))
+                        print("record time not match last work time ", i.split(",")[2], i.split(",")[4], r.get("created_at"))
                         break
 
 
@@ -252,10 +254,10 @@ def main():
     v5_token = sys.argv[1]
     enterprise = sys.argv[2]
     password = sys.argv[3]
-    # v8_token = sys.argv[4]
-
-    res = requests.get(url="")
-    v8_token = res.json().get("access_token")
+    v8_token = sys.argv[4]
+    #
+    # res = requests.get(url="")
+    # v8_token = res.json().get("access_token")
 
     if v5_token == "" or v8_token == "" or enterprise == "" or password == "":
         print("missing args")
@@ -271,7 +273,7 @@ def main():
     write_member_to_csv(inf)
 
     write()
-    # check_data(v8_token, password)
+    check_data(v8_token, password)
 
 
 if __name__ == '__main__':
