@@ -1,10 +1,13 @@
-import json
 import os
 import sys
 
 import requests
 import wget
 import yaml
+
+
+def clone_template_yamls(t: str):
+    os.system("git clone https://oauth2:%s@github.com/wanghao75/kubectl-yaml-creator.git" % t)
 
 
 def load_checklist_yaml(org: str, repo: str, gh_token: str, pr_num: str):
@@ -36,10 +39,10 @@ def load_checklist_yaml(org: str, repo: str, gh_token: str, pr_num: str):
 
 
 def complete_deployment_yaml(data):
-    if os.path.exists("../output/deployment.yaml"):
-        os.remove("../output/deployment.yaml")
-    with open("../kubectl-yaml-creator/demo/deployment.yaml", "r", encoding="utf-8") as f:
-        with open("../output/deployment.yaml", "a", encoding="utf-8") as f2:
+    if os.path.exists("output/deployment.yaml"):
+        os.remove("output/deployment.yaml")
+    with open("kubectl-yaml-creator/demo/deployment.yaml", "r", encoding="utf-8") as f:
+        with open("output/deployment.yaml", "a", encoding="utf-8") as f2:
             project_name = data.get("project")
             namespace = data.get("namespace")
             replicas = data.get("replicas")
@@ -60,8 +63,8 @@ def complete_deployment_yaml(data):
 
 
 def complete_pvc_yaml(data):
-    if os.path.exists("../output/pvc.yaml"):
-        os.remove("../output/pvc.yaml")
+    if os.path.exists("output/pvc.yaml"):
+        os.remove("output/pvc.yaml")
     init_pvc = False
     name = ""
     for v in data.get("volumes"):
@@ -79,8 +82,8 @@ def complete_pvc_yaml(data):
     storage_class_name = data.get("storageClassName")
     namespace = data.get("namespace")
 
-    with open("../kubectl-yaml-creator/demo/pvc.yaml", "r", encoding="utf-8") as f:
-        with open("../output/pvc.yaml", "a", encoding="utf-8") as f2:
+    with open("kubectl-yaml-creator/demo/pvc.yaml", "r", encoding="utf-8") as f:
+        with open("output/pvc.yaml", "a", encoding="utf-8") as f2:
             pvc_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             pvc_template.get("metadata")["name"] = name
             pvc_template.get("metadata")["namespace"] = namespace
@@ -91,8 +94,8 @@ def complete_pvc_yaml(data):
 
 
 def complete_ingress_yaml(data):
-    if os.path.exists("../output/ingress.yaml"):
-        os.remove("../output/ingress.yaml")
+    if os.path.exists("output/ingress.yaml"):
+        os.remove("output/ingress.yaml")
     if data.get("serviceExportType") != "Ingress":
         print("service doesn't need ingress.yaml")
         return
@@ -117,8 +120,8 @@ def complete_ingress_yaml(data):
         host["http"]["path"]["backend"]["serviceName"] = service_name
         rules.append(host)
 
-    with open("../kubectl-yaml-creator/demo/ingress.yaml", "r", encoding="utf-8") as f:
-        with open("../output/ingress.yaml", "a", encoding="utf-8") as f2:
+    with open("kubectl-yaml-creator/demo/ingress.yaml", "r", encoding="utf-8") as f:
+        with open("output/ingress.yaml", "a", encoding="utf-8") as f2:
             ingress_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             ingress_template.get("metadata")["name"] = ingress_name
             ingress_template.get("metadata")["annotations"]["kubernetes.io/ingress.class"] = ingress_controller
@@ -131,8 +134,8 @@ def complete_ingress_yaml(data):
 
 
 def complete_secret_yaml(data):
-    if os.path.exists("../output/secret.yaml"):
-        os.remove("../output/secret.yaml")
+    if os.path.exists("output/secret.yaml"):
+        os.remove("output/secret.yaml")
     secret_name = data.get("project") + "-secret"
     namespace = data.get("namespace")
     community = data.get("community")
@@ -160,8 +163,8 @@ def complete_secret_yaml(data):
                 key_path["path"] = path
                 values[key] = key_path
                 keysMap.append(values)
-    with open("../kubectl-yaml-creator/demo/secret.yaml", "r", encoding="utf-8") as f:
-        with open("../output/secret.yaml", "a", encoding="utf-8") as f2:
+    with open("kubectl-yaml-creator/demo/secret.yaml", "r", encoding="utf-8") as f:
+        with open("output/secret.yaml", "a", encoding="utf-8") as f2:
             secret_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             secret_template.get("metadata")["name"] = secret_name
             secret_template.get("metadata")["namespace"] = namespace
@@ -172,11 +175,11 @@ def complete_secret_yaml(data):
 
 
 def complete_namespace_yaml(data):
-    if os.path.exists("../output/namespace.yaml"):
-        os.remove("../output/namespace.yaml")
+    if os.path.exists("output/namespace.yaml"):
+        os.remove("output/namespace.yaml")
     namespace = data.get("namespace")
-    with open("../kubectl-yaml-creator/demo/namespace.yaml", "r", encoding="utf-8") as f:
-        with open("../output/namespace.yaml", "a", encoding="utf-8") as f2:
+    with open("kubectl-yaml-creator/demo/namespace.yaml", "r", encoding="utf-8") as f:
+        with open("output/namespace.yaml", "a", encoding="utf-8") as f2:
             namespace_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             namespace_template.get("metadata")["name"] = namespace
             namespace_template.get("metadata")["labels"]["name"] = namespace
@@ -185,11 +188,11 @@ def complete_namespace_yaml(data):
 
 
 def complete_kustomization_yaml(data):
-    if os.path.exists("../output/kustomization.yaml"):
-        os.remove("../output/kustomization.yaml")
+    if os.path.exists("output/kustomization.yaml"):
+        os.remove("output/kustomization.yaml")
     resource = []
     namespace = data.get("namespace")
-    files = os.listdir("../output")
+    files = os.listdir("output")
     for f in files:
         if f.endswith(".yaml"):
             resource.append(f)
@@ -206,8 +209,8 @@ def complete_kustomization_yaml(data):
 
         images_tags.append(image_tag)
 
-    with open("../kubectl-yaml-creator/demo/kustomization.yaml", "r", encoding="utf-8") as f:
-        with open("../output/kustomization.yaml", "a", encoding="utf-8") as f2:
+    with open("kubectl-yaml-creator/demo/kustomization.yaml", "r", encoding="utf-8") as f:
+        with open("output/kustomization.yaml", "a", encoding="utf-8") as f2:
             kustomization_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             kustomization_template["resources"] = resource
             kustomization_template["namespace"] = namespace
@@ -217,8 +220,8 @@ def complete_kustomization_yaml(data):
 
 
 def complete_service_yaml(data):
-    if os.path.exists("../output/service.yaml"):
-        os.remove("../output/service.yaml")
+    if os.path.exists("output/service.yaml"):
+        os.remove("output/service.yaml")
     service_name = data.get("project") + "-service"
     project = data.get("project")
     ports = []
@@ -233,8 +236,8 @@ def complete_service_yaml(data):
             }
             ports.append(port_json)
 
-    with open("../kubectl-yaml-creator/demo/service.yaml", "r", encoding="utf-8") as f:
-        with open("../output/service.yaml", "a", encoding="utf-8") as f2:
+    with open("kubectl-yaml-creator/demo/service.yaml", "r", encoding="utf-8") as f:
+        with open("output/service.yaml", "a", encoding="utf-8") as f2:
             service_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             service_template.get("metadata")["name"] = service_name
             service_template.get("metadata")["namespace"] = project
@@ -258,7 +261,53 @@ def complete_service_yaml(data):
     print("finish service")
 
 
+def complete_configmap_yaml(data):
+    if os.path.exists("output/configmap.yaml"):
+        os.remove("output/configmap.yaml")
+
+    if len(data.get("configMap").get("data")) == 0:
+        return
+
+    config_data = data.get("configMap").get("data")
+    config_name = data.get("configMap").get("name")
+
+    with open("output/configmap.yaml", "a", encoding="utf-8") as f:
+        config = {}
+        config["apiVersion"] = "v1"
+        config["kind"] = "ConfigMap"
+        config["metadata"] = {"name": config_name}
+        config["data"] = config_data
+        yaml.dump(config, f)
+    print("finish configmap")
+
+
+def complete_cronjob_yaml(data):
+    if os.path.exists("output/cronjob.yaml"):
+        os.remove("output/cronjob.yaml")
+    container = data.get("containers")
+    name = data.get("project")
+    schedule = data.get("schedule")
+
+    with open("output/cronjob.yaml", "a", encoding="utf-8") as f:
+        cron = {}
+        cron["apiVersion"] = "batch/v1beta1"
+        cron["kind"] = "Cronjob"
+        cron["metadata"] = {"name": name}
+        cron["spec"] = {
+            "schedule": schedule,
+            "concurrencyPolicy": "Forbid",
+            "jobTemplate": {"spec": {"template": {"spec": {"restartPolicy": "OnFailure", "containers": container}}}}
+        }
+
+        yaml.dump(cron, f)
+    print("finish cronjob")
+
+
 def all_init_yaml(data):
+    if data.get("cronjob"):
+        complete_cronjob_yaml(data)
+        complete_secret_yaml(data)
+        complete_kustomization_yaml(data)
     try:
         complete_deployment_yaml(data)
         complete_service_yaml(data)
@@ -266,6 +315,7 @@ def all_init_yaml(data):
         complete_ingress_yaml(data)
         complete_pvc_yaml(data)
         complete_namespace_yaml(data)
+        complete_configmap_yaml(data)
         complete_kustomization_yaml(data)
     except Exception as e:
         print("init yaml failed ", e)
@@ -324,12 +374,20 @@ def main():
     if len(sys.argv) != 5:
         print("missing args")
         sys.exit(1)
+
+    # get template yaml files
+    clone_template_yamls(token)
+    
     check_data = load_checklist_yaml(org, repo, token, number)
     all_init_yaml(check_data)
 
     # check valid yaml by kustomize build
     valid = check_yaml_valid()
-    feed_back_to_pr(valid, org, repo, number, token)
+    if valid:
+        feed_back_to_pr(True, org, repo, number, token)
+        environment_injection(check_data)
+    else:
+        feed_back_to_pr(False, org, repo, number, token)
 
 
 if __name__ == '__main__':
