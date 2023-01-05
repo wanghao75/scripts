@@ -65,6 +65,8 @@ def get_pr_changed_files(o, r, n, t, gh_t):
 
 
 def check_if_files_are_newly(file_list, comm):
+    if os.path.exists(comm.split("/")[-1]):
+        os.remove(comm.split("/")[-1])
     os.system("git clone %s" % comm)
     flag_of_send_email = False
     if comm.__contains__("opengauss"):
@@ -72,10 +74,10 @@ def check_if_files_are_newly(file_list, comm):
     else:
         folders = os.listdir(comm.split("/")[-1] + "/applications")
     for f in file_list:
-        if f.split("applicaitons/")[1].split("/")[0] in folders:
-            flag_of_send_email = False
-        else:
+        if f.split("applications/")[1].split("/")[0] in folders:
             flag_of_send_email = True
+        else:
+            flag_of_send_email = False
 
     return flag_of_send_email
 
@@ -96,11 +98,7 @@ def get_template(pr_str):
                 <br>
             </tr>
             <tr>
-                <td>
-                    <ul>
-                        <li>{}</li>
-                    </ul>
-                </td>
+                new service deploy files has been merged, pull request link: {}
             </tr>
             <tr>
                 <td>
@@ -139,23 +137,20 @@ def get_pr_link_by_commit_message(t: str):
         "Authorization": "token: %s" % t
     }
     repo_urls, commit = get_repo_url_by_env()
-    print("repos url : ", repo_urls)
     pr = ""
     for r in repo_urls:
+        r = r.replace("\n", "")
         o = r.split("/")[-2]
         rp = r.split("/")[-1]
-        print("org, repo : ", o, rp)
-        url = "https://api.github.com/repos/{}/{}/commits".format(o, rp)
-        res = requests.get(url=url, headers=headers)
-        print(res.json())
-        print(res.json()[0])
+        url1 = "https://api.github.com/repos/{}/{}/commits".format(o, rp)
+        res = requests.get(url=url1, headers=headers)
         if res.status_code != 200:
-            res = requests.get(url=url, headers=headers)
-        if res.json()[0].get("sha") == commit:
-            url2 = "https://api.github.com/repos/{}/{}/commits/%s/pulls".format(o, rp, res.json()[0].get("sha"))
+            res = requests.get(url=url1, headers=headers)
+        if res.json()[0].get("sha") == commit.replace("\n", ""):
+            url2 = "https://api.github.com/repos/{}/{}/commits/{}/pulls".format(o, rp, res.json()[0].get("sha"))
             res2 = requests.get(url=url2, headers=headers)
             if res2.status_code != 200:
-                res2 = requests.get(url=url, headers=headers)
+                res2 = requests.get(url=url2, headers=headers)
             pr = res2.json()[0].get("url")
 
         else:
