@@ -125,7 +125,7 @@ def send_email(smtp_pass, pr):
         server = smtplib.SMTP("smtp.163.com", "25")
         server.ehlo()
         server.starttls()
-        server.login("", smtp_pass)
+        server.login("shalldows@163.com", smtp_pass)
         print('login success')
         server.sendmail("shalldows@163.com", receivers.split(','), msg.as_string())
         print('send email successfully')
@@ -139,12 +139,15 @@ def get_pr_link_by_commit_message(t: str):
         "Authorization": "token: %s" % t
     }
     repo_urls, commit = get_repo_url_by_env()
+    print("repos url : ", repo_urls)
     pr = ""
     for r in repo_urls:
         o = r.split("/")[-2]
         rp = r.split("/")[-1]
         url = "https://api.github.com/repos/{}/{}/commits".format(o, rp)
         res = requests.get(url=url, headers=headers)
+        print(res.json())
+        print(res.json()[0])
         if res.status_code != 200:
             res = requests.get(url=url, headers=headers)
         if res.json()[0].get("sha") == commit:
