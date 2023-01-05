@@ -144,6 +144,7 @@ def get_pr_link_by_commit_message(t: str):
     for r in repo_urls:
         o = r.split("/")[-2]
         rp = r.split("/")[-1]
+        print("org, repo : ", o, rp)
         url = "https://api.github.com/repos/{}/{}/commits".format(o, rp)
         res = requests.get(url=url, headers=headers)
         print(res.json())
