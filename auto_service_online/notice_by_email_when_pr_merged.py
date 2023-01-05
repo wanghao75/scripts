@@ -145,9 +145,13 @@ def get_pr_link_by_commit_message(t: str):
         rp = r.split("/")[-1]
         url = "https://api.github.com/repos/{}/{}/commits".format(o, rp)
         res = requests.get(url=url, headers=headers)
+        if res.status_code != 200:
+            res = requests.get(url=url, headers=headers)
         if res.json()[0].get("sha") == commit:
             url2 = "https://api.github.com/repos/{}/{}/commits/%s/pulls".format(o, rp, res.json()[0].get("sha"))
             res2 = requests.get(url=url2, headers=headers)
+            if res2.status_code != 200:
+                res2 = requests.get(url=url, headers=headers)
             pr = res2.json()[0].get("url")
 
         else:
