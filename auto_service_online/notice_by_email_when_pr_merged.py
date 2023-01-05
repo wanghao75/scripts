@@ -42,7 +42,7 @@ def get_pr_changed_files(o, r, n, t, gh_t):
 
         get_file_url = "https://api.github.com/repos/{}/{}/pulls/{}/files".format(o, r, n)
         headers = {
-            "Authorization": gh_t
+            "Authorization": "token: %s" % gh_t
         }
         res = requests.get(url=get_file_url, headers=headers)
 
@@ -134,15 +134,53 @@ def send_email(smtp_pass, pr):
         sys.exit(1)
 
 
+def get_pr_link_by_commit_message(t: str):
+    headers = {
+        "Authorization": "token: %s" % t
+    }
+    repo_urls, commit = get_repo_url_by_env()
+    pr = ""
+    for r in repo_urls:
+        o = r.split("/")[-2]
+        rp = r.split("/")[-1]
+        url = "https://api.github.com/repos/{}/{}/commits".format(o, rp)
+        res = requests.get(url=url, headers=headers)
+        if res.json()[0].get("sha") == commit:
+            url2 = "https://api.github.com/repos/{}/{}/commits/%s/pulls".format(o, rp, res.json()[0].get("sha"))
+            res2 = requests.get(url=url2, headers=headers)
+            pr = res2.json()[0].get("url")
+
+        else:
+            continue
+    return pr
+
+
+def get_repo_url_by_env():
+    envs = os.popen("env").readlines()
+    commit = ""
+    repo_urls = []
+    for e in envs:
+        if e.startswith("GIT_URL_"):
+            repo_urls.append(e.split("=")[1])
+        if e.startswith("GIT_COMMIT"):
+            commit = e.split("=")[-1]
+        else:
+            continue
+
+    return repo_urls, commit
+
+
 def main():
-    org = sys.argv[1]
-    repo = sys.argv[2]
-    number = sys.argv[3]
-    smtp_password = sys.argv[4]
-    token = sys.argv[5]
-    gh_token = sys.argv[6]
-    if len(sys.argv) != 7:
+    smtp_password = sys.argv[1]
+    token = sys.argv[2]
+    gh_token = sys.argv[3]
+    if len(sys.argv) != 4:
         sys.exit(1)
+
+    pr_link = get_pr_link_by_commit_message(gh_token)
+    org = pr_link.split("/")[-4]
+    repo = pr_link.split("/")[-3]
+    number = pr_link.split("/")[-1]
 
     fs, co, pr_l = get_pr_changed_files(org, repo, number, token, gh_token)
     if len(fs) < 0 or co == "" or pr_l == "":
