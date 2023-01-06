@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 
@@ -7,15 +8,23 @@ import yaml
 
 
 def clone_template_yamls(t: str):
-    os.system("git clone https://oauth2:%s@github.com/wanghao75/kubectl-yaml-creator.git" % t)
+    if os.path.exists("./kubectl-yaml-creator"):
+        pwd = os.popen("pwd").readline()
+        os.chdir("%s/kubectl-yaml-creator" % pwd.replace("\n", ""))
+        os.system("git pull")
+        os.chdir("../")
+    else:
+        os.system("git clone https://oauth2:%s@github.com/wanghao75/kubectl-yaml-creator.git" % t)
 
 
-def load_checklist_yaml(org: str, repo: str, gh_token: str, pr_num: str):
-    get_file_url = "https://api.github.com/repos/{}/{}/pulls/{}/files".format(org, repo, pr_num)
-    headers = {
-        "Authorization": gh_token
+def load_checklist_yaml(org: str, repo: str, ge_token: str, pr_num: str):
+    get_file_url = "https://gitee.com/api/v5/repos/{}/{}/pulls/{}/files".format(org, repo, pr_num)
+    params = {
+        "access_token": ge_token,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
     }
-    res = requests.get(url=get_file_url, headers=headers)
+    res = requests.get(url=get_file_url, params=params)
 
     if res.status_code != 200:
         print("can't get pr's files")
@@ -23,8 +32,7 @@ def load_checklist_yaml(org: str, repo: str, gh_token: str, pr_num: str):
 
     for r in res.json():
         if r.get("filename").endswith("checklist.yaml"):
-            link = r.get("raw_url").replace("github.com", "raw.githubusercontent.com")\
-                .replace("%2F", "/").replace("/raw/", "/")
+            link = r.get("raw_url")
             if os.path.exists("./checklists.yaml"):
                 os.remove("./checklists.yaml")
             wget.download(link, "./checklists.yaml")
@@ -56,7 +64,8 @@ def complete_deployment_yaml(data):
             deploy_template.get("spec")["selector"]["matchLabels"]["app"] = project_name
             deploy_template.get("spec")["template"]["spec"]["containers"] = containers
             deploy_template.get("spec")["template"]["metadata"]["labels"]["app"] = project_name
-            deploy_template.get("spec")["template"]["spec"]["volumes"] = volumes
+            if volumes is not None:
+                deploy_template.get("spec")["template"]["spec"]["volumes"] = volumes
 
             yaml.dump(deploy_template, f2)
     print("finish deploy")
@@ -67,12 +76,13 @@ def complete_pvc_yaml(data):
         os.remove("output/pvc.yaml")
     init_pvc = False
     name = ""
-    for v in data.get("volumes"):
-        if v.get("persistentVolumeClaim") is None:
-            continue
-        else:
-            init_pvc = True
-            name = v.get("persistentVolumeClaim").get("claimName")
+    if data.get("volumes") is not None:
+        for v in data.get("volumes"):
+            if v.get("persistentVolumeClaim") is None:
+                continue
+            else:
+                init_pvc = True
+                name = v.get("persistentVolumeClaim").get("claimName")
 
     if not init_pvc:
         print("no need to init pvc.yaml")
@@ -155,14 +165,15 @@ def complete_secret_yaml(data):
             if e.get("valueFrom")["secretKeyRef"]["name"] != secret_name:
                 secret_name = e.get("valueFrom")["secretKeyRef"]["name"]
 
-        for vv in c.get("volumeMounts"):
-            if vv.get("subpath") is not None:
-                key = vv.get("subpath")
-                path = "secrets/data/{}/{}".format(community, project)
-                key_path["key"] = key
-                key_path["path"] = path
-                values[key] = key_path
-                keysMap.append(values)
+        if c.get("volumeMounts") is not None:
+            for vv in c.get("volumeMounts"):
+                if vv.get("subpath") is not None:
+                    key = vv.get("subpath")
+                    path = "secrets/data/{}/{}".format(community, project)
+                    key_path["key"] = key
+                    key_path["path"] = path
+                    values[key] = key_path
+                    keysMap.append(values)
     with open("kubectl-yaml-creator/demo/secret.yaml", "r", encoding="utf-8") as f:
         with open("output/secret.yaml", "a", encoding="utf-8") as f2:
             secret_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
@@ -265,7 +276,8 @@ def complete_configmap_yaml(data):
     if os.path.exists("output/configmap.yaml"):
         os.remove("output/configmap.yaml")
 
-    if len(data.get("configMap").get("data")) == 0:
+    if data.get("configMap") is None:
+        print("no need to init configmap.yaml")
         return
 
     config_data = data.get("configMap").get("data")
@@ -304,6 +316,7 @@ def complete_cronjob_yaml(data):
 
 
 def all_init_yaml(data):
+    os.system("mkdir output")
     if data.get("cronjob"):
         complete_cronjob_yaml(data)
         complete_secret_yaml(data)
@@ -323,7 +336,9 @@ def all_init_yaml(data):
 
 
 def check_yaml_valid():
-    result = os.popen("./kustomize build ./output/ -o ./deploy.yaml")
+    if os.path.exists("./deploy.yaml"):
+        os.remove("./deploy.yaml")
+    result = os.popen("./kustomize build output/ -o ./deploy.yaml")
     valid = True
     for res in result.readlines():
         if res.startswith("Error"):
@@ -333,26 +348,22 @@ def check_yaml_valid():
     return valid
 
 
-def feed_back_to_pr(b: bool, og: str, rp: str, num: str, gh_token: str):
+def feed_back_to_pr(b: bool, og: str, rp: str, num: str, ge_token: str):
     if not b:
-        github_api = "https://api.github.com/repos/{}/{}/issues/{}/comments".format(og, rp, num)
-        headers = {
-            "Authorization": gh_token
-        }
+        gitee_api = "https://gitee.com/api/v5/repos/{}/{}/pulls/{}/comments".format(og, rp, num)
         data = {
+            "access_token": ge_token,
             "body": "This checklist has something wrong, please check it."
                     "If you can not find out what's wrong, contact @githubliuyang777 to get some help."
         }
-        requests.post(url=github_api, headers=headers, data=data)
+        requests.post(url=gitee_api, data=json.dumps(data))
     else:
-        github_api2 = "https://api.github.com/repos/{}/{}/issues/{}/labels".format(og, rp, num)
-        headers = {
-            "Authorization": gh_token
-        }
+        gitee_api2 = " https://gitee.com/api/v5/repos/{}/{}/pulls/{}/labels".format(og, rp, num)
         data = {
+            "access_token": ge_token,
             "labels": ["yaml-check-pass"]
         }
-        requests.post(url=github_api2, headers=headers, data=data)
+        requests.post(url=gitee_api2, data=json.dumps(data))
 
 
 def environment_injection(data):
@@ -385,7 +396,7 @@ def main():
     valid = check_yaml_valid()
     if valid:
         feed_back_to_pr(True, org, repo, number, token)
-        environment_injection(check_data)
+        # environment_injection(check_data)
     else:
         feed_back_to_pr(False, org, repo, number, token)
 
