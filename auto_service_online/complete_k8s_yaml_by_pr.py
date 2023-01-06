@@ -31,10 +31,10 @@ def load_checklist_yaml(org: str, repo: str, ge_token: str, pr_num: str):
     for r in res.json():
         if r.get("filename").endswith("checklist.yaml"):
             link = r.get("raw_url")
-            if os.path.exists("./checklist.yaml"):
-                os.remove("./checklist.yaml")
-            wget.download(link, "./checklist.yaml")
-            with open("./checklist.yaml", "r", encoding="utf-8") as f:
+            if os.path.exists("./checklists.yaml"):
+                os.remove("./checklists.yaml")
+            wget.download(link, "./checklists.yaml")
+            with open("./checklists.yaml", "r", encoding="utf-8") as f:
                 data = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
     if len(data) == 0:
@@ -380,12 +380,13 @@ def main():
     org = sys.argv[2]
     repo = sys.argv[3]
     number = sys.argv[4]
-    if len(sys.argv) != 5:
+    gh_token = sys.argv[5]
+    if len(sys.argv) != 6:
         print("missing args")
         sys.exit(1)
 
     # get template yaml files
-    clone_template_yamls(token)
+    clone_template_yamls(gh_token)
     
     check_data = load_checklist_yaml(org, repo, token, number)
     all_init_yaml(check_data)
