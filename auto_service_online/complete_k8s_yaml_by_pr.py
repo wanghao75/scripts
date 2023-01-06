@@ -33,10 +33,10 @@ def load_checklist_yaml(org: str, repo: str, ge_token: str, pr_num: str):
     for r in res.json():
         if r.get("filename").endswith("checklist.yaml"):
             link = r.get("raw_url")
-            if os.path.exists("./checklists.yaml"):
-                os.remove("./checklists.yaml")
-            wget.download(link, "./checklists.yaml")
-            with open("./checklists.yaml", "r", encoding="utf-8") as f:
+            if os.path.exists("./checklist.yaml"):
+                os.remove("./checklist.yaml")
+            wget.download(link, "./checklist.yaml")
+            with open("./checklist.yaml", "r", encoding="utf-8") as f:
                 data = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
     if len(data) == 0:
