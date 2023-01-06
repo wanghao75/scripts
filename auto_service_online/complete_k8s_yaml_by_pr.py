@@ -21,8 +21,6 @@ def load_checklist_yaml(org: str, repo: str, ge_token: str, pr_num: str):
     get_file_url = "https://gitee.com/api/v5/repos/{}/{}/pulls/{}/files".format(org, repo, pr_num)
     params = {
         "access_token": ge_token,
-        'Accept': 'application/vnd.github.v3+json',
-        'Content-Type': 'application/json'
     }
     res = requests.get(url=get_file_url, params=params)
 
