@@ -6,7 +6,7 @@ import requests
 
 
 def use_kubectl_to_deploy_project():
-    work = os.popen("kubectl apply -f deploy.yaml --kubeconfig test-cluster-deploy-workspace")
+    work = os.popen("kubectl apply -f deploy.yaml --kubeconfig test-cluster-deploy-workspace.config")
     for op in work.readlines():
         if not op.replace("\n", "").endswith("created"):
             print("apply pod to cluster failed")
@@ -16,7 +16,7 @@ def use_kubectl_to_deploy_project():
 
 def check_pods_alive(ns, pj):
     alive = False
-    for line in os.popen("kubectl get pods --namespace %s --kubeconfig test-cluster-deploy-workspace.yaml" % ns)\
+    for line in os.popen("kubectl get pods --kubeconfig test-cluster-deploy-workspace.config")\
             .readlines():
         if line.__contains__("RUNNING"):
             alive = True
