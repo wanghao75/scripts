@@ -400,7 +400,7 @@ def main():
     valid = check_yaml_valid()
     if valid:
         feed_back_to_pr(True, org, repo, number, token)
-        # environment_injection(check_data)
+        environment_injection(check_data)
     else:
         feed_back_to_pr(False, org, repo, number, token)
 
