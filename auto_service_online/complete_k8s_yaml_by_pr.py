@@ -153,15 +153,16 @@ def complete_secret_yaml(data):
     values = {}
     key_path = {"key": "", "path": ""}
     for c in data.get("containers"):
-        for e in c.get("env"):
-            key = e.get("valueFrom")["secretKeyRef"]["key"]
-            path = "secrets/data/{}/{}".format(community, project)
-            key_path["key"] = key
-            key_path["path"] = path
-            values[key] = key_path
-            keysMap.append(values)
-            if e.get("valueFrom")["secretKeyRef"]["name"] != secret_name:
-                secret_name = e.get("valueFrom")["secretKeyRef"]["name"]
+        if c.get("env") is not None:
+            for e in c.get("env"):
+                key = e.get("valueFrom")["secretKeyRef"]["key"]
+                path = "secrets/data/{}/{}".format(community, project)
+                key_path["key"] = key
+                key_path["path"] = path
+                values[key] = key_path
+                keysMap.append(values)
+                if e.get("valueFrom")["secretKeyRef"]["name"] != secret_name:
+                    secret_name = e.get("valueFrom")["secretKeyRef"]["name"]
 
         if c.get("volumeMounts") is not None:
             for vv in c.get("volumeMounts"):
@@ -257,11 +258,15 @@ def complete_service_yaml(data):
                 for p in ports:
                     if p.get("targetPort") == data.get("nodePort").split(":")[0]:
                         p["nodePort"] = data.get("nodePort")
+                        
             if data.get("serviceExportType") == "LoadBalancer":
                 service_template.get("spec")["type"] = data.get("serviceExportType")
 
             if data.get("serviceExportType") == "Ingress":
                 service_template.get("spec")["type"] = data.get("serviceExportType")
+            
+            else:
+                service_template.get("spec")["type"] = "ClusterIP"
 
             service_template.get("spec")["ports"] = ports
 
