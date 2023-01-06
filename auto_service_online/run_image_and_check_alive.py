@@ -14,7 +14,7 @@ def use_kubectl_to_deploy_project():
     return True
 
 
-def check_pods_alive(ns, pj):
+def check_pods_alive():
     alive = False
     for line in os.popen("kubectl get pods --kubeconfig test-cluster-deploy-workspace.config")\
             .readlines():
@@ -112,7 +112,7 @@ def main():
         feed_back_to_pr(True, "because apply project to cluster failed", gee_token, org, repo, number)
 
     # check pods alive
-    status = check_pods_alive(os.getenv("NAMESPACE"), os.getenv("PROJECT"))
+    status = check_pods_alive()
     if status:
         prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, os.getenv("COMMUNITY"))
         remove_pods_in_test_environment()
