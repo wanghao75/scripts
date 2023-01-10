@@ -50,7 +50,7 @@ def complete_deployment_yaml(data):
     with open("kubectl-yaml-creator/demo/deployment.yaml", "r", encoding="utf-8") as f:
         with open("output/deployment.yaml", "a", encoding="utf-8") as f2:
             project_name = data.get("project")
-            namespace = data.get("namespace")
+            namespace = "deploy-workspace"
             replicas = data.get("replicas")
             containers = data.get("containers")
             volumes = data.get("volumes")
@@ -88,7 +88,7 @@ def complete_pvc_yaml(data):
 
     storage = data.get("storage")
     storage_class_name = data.get("storageClassName")
-    namespace = data.get("namespace")
+    namespace = "deploy-workspace"
 
     with open("kubectl-yaml-creator/demo/pvc.yaml", "r", encoding="utf-8") as f:
         with open("output/pvc.yaml", "a", encoding="utf-8") as f2:
@@ -110,7 +110,7 @@ def complete_ingress_yaml(data):
 
     ingress_name = data.get("project") + "-ingress"
     ingress_controller = data.get("ingress-controller")
-    namespace = data.get("namespace")
+    namespace = "deploy-workspace"
     secret_name = data.get("project") + "-tls"
     service_name = data.get("project") + "-service"
     domains = data.get("domain")
@@ -145,7 +145,7 @@ def complete_secret_yaml(data):
     if os.path.exists("output/secret.yaml"):
         os.remove("output/secret.yaml")
     secret_name = data.get("project") + "-secret"
-    namespace = data.get("namespace")
+    namespace = "deploy-workspace"
     community = data.get("community")
     project = data.get("project")
 
@@ -187,7 +187,7 @@ def complete_secret_yaml(data):
 def complete_namespace_yaml(data):
     if os.path.exists("output/namespace.yaml"):
         os.remove("output/namespace.yaml")
-    namespace = data.get("namespace")
+    namespace = "deploy-workspace"
     with open("kubectl-yaml-creator/demo/namespace.yaml", "r", encoding="utf-8") as f:
         with open("output/namespace.yaml", "a", encoding="utf-8") as f2:
             namespace_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
@@ -201,7 +201,7 @@ def complete_kustomization_yaml(data):
     if os.path.exists("output/kustomization.yaml"):
         os.remove("output/kustomization.yaml")
     resource = []
-    namespace = data.get("namespace")
+    namespace = "deploy-workspace"
     files = os.listdir("output")
     for f in files:
         if f.endswith(".yaml"):
@@ -258,13 +258,13 @@ def complete_service_yaml(data):
                 for p in ports:
                     if p.get("targetPort") == data.get("nodePort").split(":")[0]:
                         p["nodePort"] = data.get("nodePort")
-                        
+
             if data.get("serviceExportType") == "LoadBalancer":
                 service_template.get("spec")["type"] = data.get("serviceExportType")
 
             if data.get("serviceExportType") == "Ingress":
                 service_template.get("spec")["type"] = data.get("serviceExportType")
-            
+
             else:
                 service_template.get("spec")["type"] = "ClusterIP"
 
@@ -371,7 +371,7 @@ def feed_back_to_pr(b: bool, og: str, rp: str, num: str, ge_token: str):
 
 def environment_injection(data):
     community = data.get("community")
-    namespace = data.get("namespace")
+    namespace = "deploy-workspace"
     project = data.get("project")
     os.environ["COMMUNITY"] = community
     os.environ["POD_NAMESPACE"] = namespace
@@ -390,7 +390,7 @@ def main():
 
     # get template yaml files
     clone_template_yamls(gh_token)
-    
+
     check_data = load_checklist_yaml(org, repo, token, number)
     all_init_yaml(check_data)
 
