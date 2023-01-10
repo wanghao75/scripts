@@ -149,7 +149,7 @@ def complete_secret_yaml(data):
     community = data.get("community")
     project = data.get("project")
 
-    keysMap = []
+    keysMap = set()
     values = {}
     key_path = {"key": "", "path": ""}
     for c in data.get("containers"):
@@ -160,7 +160,7 @@ def complete_secret_yaml(data):
                 key_path["key"] = key
                 key_path["path"] = path
                 values[key] = key_path
-                keysMap.append(values)
+                keysMap.add(values)
                 if e.get("valueFrom")["secretKeyRef"]["name"] != secret_name:
                     secret_name = e.get("valueFrom")["secretKeyRef"]["name"]
 
@@ -172,7 +172,7 @@ def complete_secret_yaml(data):
                     key_path["key"] = key
                     key_path["path"] = path
                     values[key] = key_path
-                    keysMap.append(values)
+                    keysMap.add(values)
     with open("kubectl-yaml-creator/demo/secret.yaml", "r", encoding="utf-8") as f:
         with open("output/secret.yaml", "a", encoding="utf-8") as f2:
             secret_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
