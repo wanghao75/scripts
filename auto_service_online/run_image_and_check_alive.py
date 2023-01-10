@@ -16,8 +16,7 @@ def use_kubectl_to_deploy_project():
 
 
 def check_pod_in_test_workspace():
-    project = os.getenv("PROJECT")
-    print("prj: ", project)
+    project = os.getenv("project")
     for line in os.popen("kubectl get pods -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")\
             .readlines():
         if line.__contains__(project):
@@ -35,7 +34,7 @@ def check_pods_alive():
 
 
 def replace_test_to_product():
-    os.popen("sed -i 's/deploy-workspace/%s/g' `grep deploy-workspace -rl ./output" % os.getenv("PROJECT"))
+    os.popen("sed -i 's/deploy-workspace/%s/g' `grep deploy-workspace -rl ./output" % os.getenv("project"))
 
 
 def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, community):
@@ -130,11 +129,11 @@ def main():
     status = check_pods_alive()
     if status:
         replace_test_to_product()
-        prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, os.getenv("COMMUNITY"))
+        prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, os.getenv("community"))
         remove_pods_in_test_environment()
 
     else:
-        feed_back_to_pr(True, "because pod that has been applied to test cluster is not alive, service is unaccessible",
+        feed_back_to_pr(True, "because pod that has been applied to test cluster is not alive, service is unreachable",
                         gee_token, org, repo, number)
         sys.exit(1)
 
