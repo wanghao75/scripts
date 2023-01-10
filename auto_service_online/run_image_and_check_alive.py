@@ -6,12 +6,21 @@ import requests
 
 
 def use_kubectl_to_deploy_project():
+    check_pod_in_test_workspace()
     work = os.popen("kubectl apply -f deploy.yaml --kubeconfig test-cluster-deploy-workspace.config")
     for op in work.readlines():
         if not op.replace("\n", "").endswith("created"):
             print("apply pod to cluster failed")
             return False
     return True
+
+
+def check_pod_in_test_workspace():
+    project = os.getenv("PROJECT")
+    for line in os.popen("kubectl get pod %s -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config"
+                         % project).readlines():
+        if line.__contains__(project):
+            os.popen("kubectl delete deployment %s -n deploy-workspace" % project)
 
 
 def check_pods_alive():
@@ -22,6 +31,10 @@ def check_pods_alive():
             alive = True
             break
     return alive
+
+
+def replace_test_to_product():
+    os.popen("sed -i 's/deploy-workspace/%s/g' `grep deploy-workspace -rl ./output" % os.getenv("PROJECT"))
 
 
 def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, community):
@@ -115,6 +128,7 @@ def main():
     # check pods alive
     status = check_pods_alive()
     if status:
+        replace_test_to_product()
         prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, os.getenv("COMMUNITY"))
         remove_pods_in_test_environment()
 
