@@ -17,8 +17,8 @@ def use_kubectl_to_deploy_project():
 
 def check_pod_in_test_workspace():
     project = os.getenv("PROJECT")
-    for line in os.popen("kubectl get pod %s -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config"
-                         % project).readlines():
+    for line in os.popen("kubectl get pods -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")\
+            .readlines():
         if line.__contains__(project):
             os.popen("kubectl delete deployment %s -n deploy-workspace" % project)
 
