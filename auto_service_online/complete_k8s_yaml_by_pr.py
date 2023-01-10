@@ -373,9 +373,9 @@ def environment_injection(data):
     community = data.get("community")
     namespace = "deploy-workspace"
     project = data.get("project")
-    os.environ["COMMUNITY"] = community
-    os.environ["POD_NAMESPACE"] = namespace
-    os.environ["PROJECT"] = project
+    os.system("export COMMUNITY=%s" % community)
+    os.system("export POD_NAMESPACE=%s" % namespace)
+    os.system("export PROJECT=%s" % project)
 
 
 def main():
