@@ -19,8 +19,9 @@ def load_checklist_yaml():
 
 def use_kubectl_to_deploy_project(project):
     check_pod_in_test_workspace(project)
-    work = os.popen("kubectl apply -f deploy.yaml --kubeconfig test-cluster-deploy-workspace.config")
+    work = os.popen("kubectl apply -f deploy.yaml -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")
     for op in work.readlines():
+        print("apply result: ", op)
         if not op.replace("\n", "").endswith("created"):
             print("apply pod to cluster failed")
             return False
