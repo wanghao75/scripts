@@ -3,10 +3,22 @@ import sys
 import time
 
 import requests
+import yaml
 
 
-def use_kubectl_to_deploy_project():
-    check_pod_in_test_workspace()
+def load_checklist_yaml():
+    with open("./checklist.yaml", "r", encoding="utf-8") as f:
+        data = yaml.load(f.read(), Loader=yaml.SafeLoader)
+
+    if len(data) == 0:
+        print("no data")
+        sys.exit(1)
+
+    return data
+
+
+def use_kubectl_to_deploy_project(project):
+    check_pod_in_test_workspace(project)
     work = os.popen("kubectl apply -f deploy.yaml --kubeconfig test-cluster-deploy-workspace.config")
     for op in work.readlines():
         if not op.replace("\n", "").endswith("created"):
@@ -15,8 +27,7 @@ def use_kubectl_to_deploy_project():
     return True
 
 
-def check_pod_in_test_workspace():
-    project = os.getenv("project")
+def check_pod_in_test_workspace(project):
     for line in os.popen("kubectl get pods -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")\
             .readlines():
         if line.__contains__(project):
@@ -33,8 +44,8 @@ def check_pods_alive():
     return alive
 
 
-def replace_test_to_product():
-    os.popen("sed -i 's/deploy-workspace/%s/g' `grep deploy-workspace -rl ./output" % os.getenv("project"))
+def replace_test_to_product(project):
+    os.popen("sed -i 's/deploy-workspace/%s/g' `grep deploy-workspace -rl ./output" % project)
 
 
 def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, community):
@@ -119,8 +130,12 @@ def main():
         print("missing args")
         sys.exit(1)
 
+    data = load_checklist_yaml()
+    prj = data.get("project")
+    cmt = data.get("community")
+
     # deploy to test cluster
-    deploy_status = use_kubectl_to_deploy_project()
+    deploy_status = use_kubectl_to_deploy_project(prj)
     if not deploy_status:
         feed_back_to_pr(True, "because apply project to test cluster failed", gee_token, org, repo, number)
         sys.exit(1)
@@ -128,8 +143,8 @@ def main():
     # check pods alive
     status = check_pods_alive()
     if status:
-        replace_test_to_product()
-        prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, os.getenv("community"))
+        replace_test_to_product(prj)
+        prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, cmt)
         remove_pods_in_test_environment()
 
     else:
