@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-from pipes import quote
 
 import requests
 import wget
@@ -168,7 +167,7 @@ def complete_secret_yaml(data):
         if c.get("volumeMounts") is not None:
             for vv in c.get("volumeMounts"):
                 if vv.get("subpath") is not None:
-                    key = vv.get("subpath")
+                    key = vv.get("subPath")
                     path = "secrets/data/{}/{}".format(community, project)
                     key_path["key"] = key
                     key_path["path"] = path
