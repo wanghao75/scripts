@@ -370,11 +370,9 @@ def feed_back_to_pr(b: bool, og: str, rp: str, num: str, ge_token: str):
 
 
 def environment_injection(data):
-    image = data.get("image")
     community = data.get("community")
     namespace = data.get("namespace")
     project = data.get("project")
-    os.environ["IMAGE_ID"] = image
     os.environ["COMMUNITY"] = community
     os.environ["POD_NAMESPACE"] = namespace
     os.environ["PROJECT"] = project
