@@ -179,7 +179,7 @@ def complete_secret_yaml(data):
             secret_template.get("metadata")["name"] = secret_name
             secret_template.get("metadata")["namespace"] = namespace
             secret_template.get("spec")["name"] = secret_name
-            secret_template.get("spec")["keysMap"] = keysMap
+            secret_template.get("spec")["keysMap"] = {keysMap}
             yaml.dump(secret_template, f2)
     print("finish secret")
 
