@@ -110,6 +110,7 @@ def main():
     deploy_status = use_kubectl_to_deploy_project()
     if not deploy_status:
         feed_back_to_pr(True, "because apply project to test cluster failed", gee_token, org, repo, number)
+        sys.exit(1)
 
     # check pods alive
     status = check_pods_alive()
@@ -120,6 +121,7 @@ def main():
     else:
         feed_back_to_pr(True, "because pod that has been applied to test cluster is not alive, service is unaccessible",
                         gee_token, org, repo, number)
+        sys.exit(1)
 
 
 if __name__ == '__main__':
