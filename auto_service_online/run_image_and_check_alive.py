@@ -32,7 +32,7 @@ def check_pod_in_test_workspace(project):
             .readlines():
         if line.__contains__(project):
             os.popen("kubectl delete deployment %s -n deploy-workspace "
-                     "--kubeconfig test-cluster-deploy-workspace.config" % line.replace("\n", "").split(" ")[0])
+                     "--kubeconfig test-cluster-deploy-workspace.config" % project)
 
 
 def check_pods_alive():
