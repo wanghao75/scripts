@@ -371,7 +371,7 @@ def feed_back_to_pr(b: bool, og: str, rp: str, num: str, ge_token: str):
 
 
 def set_env(e):
-    print("export {}={};".format(quote(e), quote(e)))
+    return "export {}={};".format(quote(e), quote(e))
 
 
 def environment_injection(data):
