@@ -1,6 +1,7 @@
 import json
 import os
 import sys
+from pipes import quote
 
 import requests
 import wget
@@ -369,13 +370,17 @@ def feed_back_to_pr(b: bool, og: str, rp: str, num: str, ge_token: str):
         requests.post(url=gitee_api2, data=json.dumps(data))
 
 
+def set_env(e):
+    print("export {}={};".format(quote(e), quote(e)))
+
+
 def environment_injection(data):
     community = data.get("community")
     namespace = "deploy-workspace"
     project = data.get("project")
-    os.system("setx /M COMMUNITY=%s" % community)
-    os.system("setx /M POD_NAMESPACE=%s" % namespace)
-    os.system("setx /M PROJECT=%s" % project)
+    os.system("eval $%s" % set_env(community))
+    os.system("eval $%s" % set_env(namespace))
+    os.system("eval $%s" % set_env(project))
 
 
 def main():
