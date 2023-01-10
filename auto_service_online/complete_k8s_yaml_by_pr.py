@@ -32,10 +32,10 @@ def load_checklist_yaml(org: str, repo: str, ge_token: str, pr_num: str):
     for r in res.json():
         if r.get("filename").endswith("checklist.yaml"):
             link = r.get("raw_url")
-            if os.path.exists("./checklists.yaml"):
-                os.remove("./checklists.yaml")
-            wget.download(link, "./checklists.yaml")
-            with open("./checklists.yaml", "r", encoding="utf-8") as f:
+            if os.path.exists("./checklist.yaml"):
+                os.remove("./checklist.yaml")
+            wget.download(link, "./checklist.yaml")
+            with open("./checklist.yaml", "r", encoding="utf-8") as f:
                 data = yaml.load(f.read(), Loader=yaml.SafeLoader)
 
     if len(data) == 0:
@@ -370,19 +370,6 @@ def feed_back_to_pr(b: bool, og: str, rp: str, num: str, ge_token: str):
         requests.post(url=gitee_api2, data=json.dumps(data))
 
 
-def set_env(e):
-    return "export {}={};".format(quote(e), quote(e))
-
-
-def environment_injection(data):
-    community = data.get("community")
-    namespace = "deploy-workspace"
-    project = data.get("project")
-    os.system("eval $%s" % set_env(community))
-    os.system("eval $%s" % set_env(namespace))
-    os.system("eval $%s" % set_env(project))
-
-
 def main():
     token = sys.argv[1]
     org = sys.argv[2]
@@ -403,7 +390,6 @@ def main():
     valid = check_yaml_valid()
     if valid:
         feed_back_to_pr(True, org, repo, number, token)
-        environment_injection(check_data)
     else:
         feed_back_to_pr(False, org, repo, number, token)
 
