@@ -166,7 +166,7 @@ def complete_secret_yaml(data):
 
         if c.get("volumeMounts") is not None:
             for vv in c.get("volumeMounts"):
-                if vv.get("subpath") is not None:
+                if vv.get("subPath") is not None:
                     key = vv.get("subPath")
                     path = "secrets/data/{}/{}".format(community, project)
                     key_path["key"] = key
