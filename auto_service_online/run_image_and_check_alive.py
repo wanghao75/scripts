@@ -107,8 +107,8 @@ def feed_back_to_pr(response_pr: bool, reason: str, t: str, o: str, r: str, n: s
         data = {
             "access_token": t,
             "body": "Deploy service to test environment failed, {}, please check your checklist.yaml,"
-                    " if you have no idea about how to fix it, "
-                    "contact with @githubliuyang777 (刘洋) to get some help.".format(reason)
+                    " if there is nothing wrong with it, or if you have no idea about how to fix it, "
+                    "contact with @ (刘洋) to get some help.".format(reason)
         }
         requests.post(url=gitee_api, data=data)
 
@@ -138,7 +138,7 @@ def main():
     # deploy to test cluster
     deploy_status = use_kubectl_to_deploy_project(prj)
     if not deploy_status:
-        feed_back_to_pr(True, "because apply project to test cluster failed", gee_token, org, repo, number)
+        feed_back_to_pr(True, "because apply this project to test cluster failed", gee_token, org, repo, number)
         sys.exit(1)
 
     # check pods alive
