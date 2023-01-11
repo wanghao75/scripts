@@ -61,6 +61,7 @@ def complete_deployment_yaml(data):
             deploy_template.get("spec")["replicas"] = replicas
             deploy_template.get("spec")["selector"]["matchLabels"]["app"] = project_name
             deploy_template.get("spec")["template"]["spec"]["containers"] = containers
+            deploy_template.get("spec")["template"]["spec"]["imagePullSecrets"] = {"name": "huawei-swr-image-pull-secret"}
             deploy_template.get("spec")["template"]["metadata"]["labels"]["app"] = project_name
             if volumes is not None:
                 deploy_template.get("spec")["template"]["spec"]["volumes"] = volumes
