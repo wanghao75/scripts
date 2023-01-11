@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 import time
@@ -65,14 +66,19 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         os.chdir("deploy")
         os.system(
             "mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {}"
-            .format(os.getenv("PROJECT"), proj, branch, "add new service files", branch))
+            .format(proj, proj, branch, "add new service files", branch))
 
-        os.system('curl \
-                  -X POST \
-                  -header "Content-Type: application/json;charset=UTF-8" \
-                  https://gitee.com/api/v5/repos/wanghaosq/infra/pulls \
-                  -d "{\"access_token\":\"{}\", \"title\":\"{}\",\"head\":\"{}:{}\",\"base\":\"master\",\"prune_source_branch\":\"true\"}"'
-                  .format(ge_token, "add new service", ge_user, branch))
+        uri = "https://gitee.com/api/v5/repos/wanghaosq/infra/pulls"
+        headers = {"Accept": "application/json"}
+        data = {
+            "access_token": ge_token,
+            "title": "add new service",
+            "head": "{}:{}".format(ge_user, branch),
+            "base": "master",
+            "prune_source_branch": "true"
+        }
+        requests.post(url=uri, headers=headers, data=data)
+
         os.chdir(path)
 
     if community in ["openeuler", "openlookeng", "mindspore"]:
@@ -89,15 +95,20 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         branch = proj + "_%d" % int(time.time())
         os.chdir("applications")
         os.system("mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {}"
-                  .format(repo, proj, os.getenv("PROJECT"), branch, "add new service files", branch))
+                  .format(proj, proj, os.getenv("PROJECT"), branch, "add new service files", branch))
 
-        os.system('curl \
-          -X POST \
-          -H "Accept: application/vnd.github.v3+json" \
-          -H "Authorization: Bearer {}" \
-          https://api.github.com/repos/wanghao75/{}/pulls \
-          -d "{\"title\":\"{}\",\"head\":\"{}:{}\",\"base\":\"master\",\"prune_source_branch\":\"true\"}"'
-                  .format(gh_token, repo, "add new service", gh_user, branch))
+        uri = "https://api.github.com/repos/wanghao75/{}/pulls".format(repo)
+        headers = {
+            "Accept": "application/vnd.github.v3+json",
+            "Authorization": "token %s" % gh_token
+        }
+        data = {
+            "title": "add new service",
+            "head": "{}:{}".format(gh_user, branch),
+            "base": "master",
+            "prune_source_branch": "true"
+        }
+        requests.post(url=uri, headers=headers, data=json.dumps(data))
         os.chdir(path)
 
 
