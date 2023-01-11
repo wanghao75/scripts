@@ -61,7 +61,9 @@ def complete_deployment_yaml(data):
             deploy_template.get("spec")["replicas"] = replicas
             deploy_template.get("spec")["selector"]["matchLabels"]["app"] = project_name
             deploy_template.get("spec")["template"]["spec"]["containers"] = containers
-            deploy_template.get("spec")["template"]["spec"]["imagePullSecrets"] = [{"name": "huawei-swr-image-pull-secret"}]
+            pull_secret = []
+            pull_secret.append({"name": "huawei-swr-image-pull-secret"})
+            deploy_template.get("spec")["template"]["spec"]["imagePullSecrets"] = pull_secret
             deploy_template.get("spec")["template"]["metadata"]["labels"]["app"] = project_name
             if volumes is not None:
                 deploy_template.get("spec")["template"]["spec"]["volumes"] = volumes
@@ -150,7 +152,6 @@ def complete_secret_yaml(data):
     community = data.get("community")
     project = data.get("project")
 
-    keysMap = []
     values = {}
     key_path = {"key": "", "path": ""}
     for c in data.get("containers"):
