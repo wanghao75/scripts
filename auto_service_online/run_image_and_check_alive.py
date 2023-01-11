@@ -64,7 +64,7 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         branch = proj + "_%d" % int(time.time())
         os.chdir("deploy")
         os.system(
-            "mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {};"
+            "mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am \"{}\";git push -u origin {};"
             .format(proj, proj, branch, "add new service files", branch))
 
         uri = "https://gitee.com/api/v5/repos/wanghaosq/infra/pulls"
@@ -91,7 +91,7 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         branch = proj + "_%d" % int(time.time())
         os.chdir("applications")
         os.system("mkdir {};cp -r ../../output/* {};git checkout -b {};"
-                  "git add .;git commit -am {};git push -u origin {};"
+                  "git add .;git commit -am \"{}\";git push -u origin {};"
                   .format(proj, proj, branch, "add new service files", branch))
 
         uri = "https://api.github.com/repos/wanghao75/{}/pulls".format(repo)
