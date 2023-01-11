@@ -56,7 +56,6 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         upstream = "https://gitee.com/wanghaosq/infra"
         clone_cmd = "git clone https://oauth2:{}@gitee.com/{}/infra".format(ge_token, ge_user)
         os.system(clone_cmd)
-        path = os.popen("pwd").read()
         os.chdir("infra")
         os.system("git config user.name {};git config user.email {};"
                   "git remote add upstream {};git fetch upstream;git rebase upstream/master;"
@@ -79,14 +78,11 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         }
         requests.post(url=uri, headers=headers, data=data)
 
-        os.chdir(path)
-
     if community in ["openeuler", "openlookeng", "mindspore"]:
         upstream = "https://github.com/wanghao75/infra-%s" % community
         repo = "infra-" + community
         clone_cmd = "git clone https://oauth2:{}@github.com/{}/{}".format(gh_token, gh_user, repo)
         os.system(clone_cmd)
-        path = os.popen("pwd").read()
         os.chdir("%s" % repo)
         os.system("git config user.name {};git config user.email {};"
                   "git remote add upstream {};git fetch upstream;git rebase upstream/master;"
@@ -110,7 +106,6 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
             "prune_source_branch": "true"
         }
         requests.post(url=uri, headers=headers, data=json.dumps(data))
-        os.chdir(path)
 
 
 def feed_back_to_pr(response_pr: bool, reason: str, t: str, o: str, r: str, n: str):
