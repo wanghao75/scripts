@@ -96,7 +96,7 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         os.chdir("applications")
         os.system("mkdir {};cp -r ../../output/* {};git checkout -b {};"
                   "git add .;git commit -am {};git push -u origin {};"
-                  .format(proj, proj, os.getenv("PROJECT"), branch, "add new service files", branch))
+                  .format(proj, proj, branch, "add new service files", branch))
 
         uri = "https://api.github.com/repos/wanghao75/{}/pulls".format(repo)
         headers = {
