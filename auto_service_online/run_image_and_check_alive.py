@@ -37,7 +37,7 @@ def check_pod_in_test_workspace(project):
 
 def check_pods_alive():
     # make sure service is healthy
-    time.sleep(600)
+    time.sleep(120)
     alive = False
     for line in os.popen("kubectl get pods -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")\
             .readlines():
