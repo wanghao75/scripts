@@ -68,7 +68,7 @@ def complete_deployment_yaml(data):
             if volumes is not None:
                 deploy_template.get("spec")["template"]["spec"]["volumes"] = volumes
 
-            yaml.dump(deploy_template, f2)
+            yaml.dump(deploy_template, f2, sort_keys=False)
     print("finish deploy")
 
 
@@ -100,7 +100,7 @@ def complete_pvc_yaml(data):
             pvc_template.get("metadata")["namespace"] = namespace
             pvc_template.get("spec")["resources"]["requests"]["storage"] = storage
             pvc_template.get("spec")["storageClassName"] = storage_class_name
-            yaml.dump(pvc_template, f2)
+            yaml.dump(pvc_template, f2, sort_keys=False)
     print("finish pvc")
 
 
@@ -140,7 +140,7 @@ def complete_ingress_yaml(data):
             ingress_template.get("spec")["tls"][0]["hosts"] = domains
             ingress_template.get("spec")["tls"][0]["secretName"] = secret_name
             ingress_template.get("spec")["rules"] = rules
-            yaml.dump(ingress_template, f2)
+            yaml.dump(ingress_template, f2, sort_keys=False)
     print("finish ingress")
 
 
@@ -180,7 +180,7 @@ def complete_secret_yaml(data):
             secret_template.get("metadata")["namespace"] = namespace
             secret_template.get("spec")["name"] = secret_name
             secret_template.get("spec")["keysMap"] = values
-            yaml.dump(secret_template, f2)
+            yaml.dump(secret_template, f2, sort_keys=False)
     print("finish secret")
 
 
@@ -193,7 +193,7 @@ def complete_namespace_yaml(data):
             namespace_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             namespace_template.get("metadata")["name"] = namespace
             namespace_template.get("metadata")["labels"]["name"] = namespace
-            yaml.dump(namespace_template, f2)
+            yaml.dump(namespace_template, f2, sort_keys=False)
     print("finish namespace")
 
 
@@ -225,7 +225,7 @@ def complete_kustomization_yaml(data):
             kustomization_template["resources"] = resource
             kustomization_template["namespace"] = namespace
             kustomization_template["images"] = images_tags
-            yaml.dump(kustomization_template, f2)
+            yaml.dump(kustomization_template, f2, sort_keys=False)
     print("finish kustomization")
 
 
@@ -271,7 +271,7 @@ def complete_service_yaml(data):
             service_template.get("spec")["ports"] = ports
 
             service_template.get("spec")["selector"]["app"] = project
-            yaml.dump(service_template, f2)
+            yaml.dump(service_template, f2, sort_keys=False)
     print("finish service")
 
 
@@ -292,7 +292,7 @@ def complete_configmap_yaml(data):
         config["kind"] = "ConfigMap"
         config["metadata"] = {"name": config_name}
         config["data"] = config_data
-        yaml.dump(config, f)
+        yaml.dump(config, f, sort_keys=False)
     print("finish configmap")
 
 
@@ -314,7 +314,7 @@ def complete_cronjob_yaml(data):
             "jobTemplate": {"spec": {"template": {"spec": {"restartPolicy": "OnFailure", "containers": container}}}}
         }
 
-        yaml.dump(cron, f)
+        yaml.dump(cron, f, sort_keys=False)
     print("finish cronjob")
 
 
