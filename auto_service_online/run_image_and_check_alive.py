@@ -50,7 +50,7 @@ def replace_test_to_product(project):
     os.popen("sed -i 's/deploy-workspace/%s/g' `grep deploy-workspace -rl ./output" % project)
 
 
-def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, community):
+def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, community, proj):
     if community == "opengauss":
         upstream = "https://gitee.com/wanghaosq/infra"
         clone_cmd = "git clone https://oauth2:{}@gitee.com/{}/infra".format(ge_token, ge_user)
@@ -61,11 +61,11 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
                   "git remote add upstream {};git fetch upstream;git rebase upstream/master"
                   .format(ge_user, ge_email, upstream))
 
-        branch = os.getenv("PROJECT") + "_%d" % int(time.time())
+        branch = proj + "_%d" % int(time.time())
         os.chdir("deploy")
         os.system(
             "mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {}"
-            .format(os.getenv("PROJECT"), os.getenv("PROJECT"), branch, "add new service files", branch))
+            .format(os.getenv("PROJECT"), proj, branch, "add new service files", branch))
 
         os.system('curl \
                   -X POST \
@@ -86,10 +86,10 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
                   "git remote add upstream {};git fetch upstream;git rebase upstream/master"
                   .format(gh_user, gh_email, upstream))
 
-        branch = os.getenv("PROJECT") + "_%d" % int(time.time())
+        branch = proj + "_%d" % int(time.time())
         os.chdir("applications")
         os.system("mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {}"
-                  .format(repo, os.getenv("PROJECT"), os.getenv("PROJECT"), branch, "add new service files", branch))
+                  .format(repo, proj, os.getenv("PROJECT"), branch, "add new service files", branch))
 
         os.system('curl \
           -X POST \
@@ -146,7 +146,7 @@ def main():
     status = check_pods_alive()
     if status:
         replace_test_to_product(prj)
-        prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, cmt)
+        prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, cmt, prj)
         remove_pods_in_test_environment()
 
     else:
