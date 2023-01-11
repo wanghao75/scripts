@@ -37,7 +37,7 @@ def check_pod_in_test_workspace(project):
 
 def check_pods_alive():
     # make sure service is healthy
-    time.sleep(120)
+    time.sleep(30)
     alive = False
     for line in os.popen("kubectl get pods -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")\
             .readlines():
@@ -59,13 +59,13 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         path = os.popen("pwd").read()
         os.chdir("infra")
         os.system("git config user.name {};git config user.email {};"
-                  "git remote add upstream {};git fetch upstream;git rebase upstream/master"
+                  "git remote add upstream {};git fetch upstream;git rebase upstream/master;"
                   .format(ge_user, ge_email, upstream))
 
         branch = proj + "_%d" % int(time.time())
         os.chdir("deploy")
         os.system(
-            "mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {}"
+            "mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {};"
             .format(proj, proj, branch, "add new service files", branch))
 
         uri = "https://gitee.com/api/v5/repos/wanghaosq/infra/pulls"
@@ -89,12 +89,13 @@ def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, com
         path = os.popen("pwd").read()
         os.chdir("%s" % repo)
         os.system("git config user.name {};git config user.email {};"
-                  "git remote add upstream {};git fetch upstream;git rebase upstream/master"
+                  "git remote add upstream {};git fetch upstream;git rebase upstream/master;"
                   .format(gh_user, gh_email, upstream))
 
         branch = proj + "_%d" % int(time.time())
         os.chdir("applications")
-        os.system("mkdir {};cp -r ../../output/* {};git checkout -b {};git add .;git commit -am {};git push -u origin {}"
+        os.system("mkdir {};cp -r ../../output/* {};git checkout -b {};"
+                  "git add .;git commit -am {};git push -u origin {};"
                   .format(proj, proj, os.getenv("PROJECT"), branch, "add new service files", branch))
 
         uri = "https://api.github.com/repos/wanghao75/{}/pulls".format(repo)
