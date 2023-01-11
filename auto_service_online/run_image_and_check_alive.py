@@ -21,6 +21,7 @@ def use_kubectl_to_deploy_project(project):
     check_pod_in_test_workspace(project)
     work = os.popen("kubectl apply -f deploy.yaml -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")
     for op in work.readlines():
+        print("op ================= ", op)
         if op.replace("\n", "").__contains__("error"):
             print("apply pod to cluster failed")
             return False
@@ -36,6 +37,8 @@ def check_pod_in_test_workspace(project):
 
 
 def check_pods_alive():
+    # make sure service is healthy
+    time.sleep(600)
     alive = False
     for line in os.popen("kubectl get pods -n deploy-workspace --kubeconfig test-cluster-deploy-workspace.config")\
             .readlines():
