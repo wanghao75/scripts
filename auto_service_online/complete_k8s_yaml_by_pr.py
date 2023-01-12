@@ -262,9 +262,6 @@ def complete_service_yaml(data):
             if data.get("serviceExportType") == "LoadBalancer":
                 service_template.get("spec")["type"] = data.get("serviceExportType")
 
-            if data.get("serviceExportType") == "Ingress":
-                service_template.get("spec")["type"] = data.get("serviceExportType")
-
             else:
                 service_template.get("spec")["type"] = "ClusterIP"
 
