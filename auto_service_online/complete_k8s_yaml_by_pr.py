@@ -121,15 +121,16 @@ def complete_ingress_yaml(data):
     tls_list = []
     for d in domains:
         host = {"host": d, "http": {
-            "paths": {
-                "backend": {
-                    "serviceName": "",
-                    "servicePort": 80
-                },
-                "path": "/"
-            }
+            "paths": []
         }}
-        host["http"]["paths"]["backend"]["serviceName"] = service_name
+        
+        backend = [{"backend": {
+            "serviceName": service_name,
+            "servicePort": 80
+        },
+            "path": "/"}]
+
+        host["http"]["paths"] = backend
         tls = {"hosts": d, "secretName": secret_name}
         rules.append(host)
         tls_list.append(tls)
