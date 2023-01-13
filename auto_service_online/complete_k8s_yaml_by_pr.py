@@ -128,7 +128,7 @@ def complete_ingress_yaml(data):
                 "path": "/"
             }
         }}
-        host["http"]["path"]["backend"]["serviceName"] = service_name
+        host["http"]["paths"]["backend"]["serviceName"] = service_name
         rules.append(host)
 
     with open("kubectl-yaml-creator/demo/ingress.yaml", "r", encoding="utf-8") as f:
