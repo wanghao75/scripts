@@ -120,7 +120,7 @@ def complete_ingress_yaml(data):
     rules = []
     for d in domains:
         host = {"host": d, "http": {
-            "path": {
+            "paths": {
                 "backend": {
                     "serviceName": "",
                     "servicePort": 80
@@ -160,7 +160,7 @@ def complete_secret_yaml(data):
     for c in data.get("containers"):
         if c.get("env") is not None:
             for e in c.get("env"):
-                key = e.get("valueFrom")["secretKeyRef"]["key"]
+                key = e.get("valueFrom").get("secretKeyRef").get("key")
                 path = "secrets/data/{}/{}".format(community, project)
                 key_path["key"] = key
                 key_path["path"] = path
