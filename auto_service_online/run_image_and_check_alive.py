@@ -48,7 +48,7 @@ def check_pods_alive():
 
 
 def replace_test_to_product(project):
-    res = os.popen("sed -i 's/deploy-workspace/{}/g' `grep deploy-workspace -rl ./output`".format(project)).readlines()
+    res = os.popen(r'sed -i "s/deploy-workspace/{}/g" `grep deploy-workspace -rl ./output`'.format(project)).readlines()
     print(res)
 
 
