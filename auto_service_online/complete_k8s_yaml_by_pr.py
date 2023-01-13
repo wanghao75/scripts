@@ -290,7 +290,8 @@ def complete_configmap_yaml(data):
         config["metadata"] = {"name": config_name}
         config["data"] = config_data
         yaml.dump(config, f, sort_keys=False)
-    os.system("sed -i 's/    config.yaml:/    config.yaml: |/g' output/configmap.yaml")
+    res = os.popen("sed -i 's/    config.yaml:/    config.yaml: |/g' output/configmap.yaml").readlines()
+    print(res)
     print("finish configmap")
 
 
