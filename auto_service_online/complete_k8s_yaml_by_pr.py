@@ -118,6 +118,7 @@ def complete_ingress_yaml(data):
     service_name = data.get("project") + "-service"
     domains = data.get("domain")
     rules = []
+    tls_list = []
     for d in domains:
         host = {"host": d, "http": {
             "paths": {
@@ -129,7 +130,9 @@ def complete_ingress_yaml(data):
             }
         }}
         host["http"]["paths"]["backend"]["serviceName"] = service_name
+        tls = {"hosts": d, "secretName": secret_name}
         rules.append(host)
+        tls_list.append(tls)
 
     with open("kubectl-yaml-creator/demo/ingress.yaml", "r", encoding="utf-8") as f:
         with open("output/ingress.yaml", "a", encoding="utf-8") as f2:
@@ -140,8 +143,7 @@ def complete_ingress_yaml(data):
                 ingress_template.get("metadata")["annotations"]["nginx.ingress.kubernetes.io/custom-http-errors"] = "400,500"
                 ingress_template.get("metadata")["annotations"]["nginx.ingress.kubernetes.io/proxy-body-size"] = "2m"
             ingress_template.get("metadata")["namespace"] = namespace
-            ingress_template.get("spec")["tls"][0]["hosts"] = domains
-            ingress_template.get("spec")["tls"][0]["secretName"] = secret_name
+            ingress_template.get("spec")["tls"] = tls_list
             ingress_template.get("spec")["rules"] = rules
             yaml.dump(ingress_template, f2, sort_keys=False)
     print("finish ingress")
@@ -160,10 +162,11 @@ def complete_secret_yaml(data):
     for c in data.get("containers"):
         if c.get("env") is not None:
             for e in c.get("env"):
-                key = e.get("valueFrom").get("secretKeyRef").get("key")
+                key = e["valueFrom"]["secretKeyRef"]["key"]
                 path = "secrets/data/{}/{}".format(community, project)
                 key_path["key"] = key
                 key_path["path"] = path
+                print(key_path)
                 values[key] = key_path
                 if e.get("valueFrom")["secretKeyRef"]["name"] != secret_name:
                     secret_name = e.get("valueFrom")["secretKeyRef"]["name"]
@@ -176,6 +179,7 @@ def complete_secret_yaml(data):
                     key_path["key"] = key
                     key_path["path"] = path
                     values[key] = key_path
+    print(values)
     with open("kubectl-yaml-creator/demo/secret.yaml", "r", encoding="utf-8") as f:
         with open("output/secret.yaml", "a", encoding="utf-8") as f2:
             secret_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
