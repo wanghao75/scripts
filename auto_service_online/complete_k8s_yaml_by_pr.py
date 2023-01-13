@@ -136,6 +136,9 @@ def complete_ingress_yaml(data):
             ingress_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
             ingress_template.get("metadata")["name"] = ingress_name
             ingress_template.get("metadata")["annotations"]["kubernetes.io/ingress.class"] = ingress_controller
+            if ingress_controller == "nginx":
+                ingress_template.get("metadata")["annotations"]["nginx.ingress.kubernetes.io/custom-http-errors"] = "400,500"
+                ingress_template.get("metadata")["annotations"]["nginx.ingress.kubernetes.io/proxy-body-size"] = "2m"
             ingress_template.get("metadata")["namespace"] = namespace
             ingress_template.get("spec")["tls"][0]["hosts"] = domains
             ingress_template.get("spec")["tls"][0]["secretName"] = secret_name
