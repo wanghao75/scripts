@@ -123,7 +123,7 @@ def complete_ingress_yaml(data):
         host = {"host": d, "http": {
             "paths": []
         }}
-        
+
         backend = [{"backend": {
             "serviceName": service_name,
             "servicePort": 80
@@ -131,7 +131,7 @@ def complete_ingress_yaml(data):
             "path": "/"}]
 
         host["http"]["paths"] = backend
-        tls = {"hosts": d, "secretName": secret_name}
+        tls = {"hosts": [].append(d), "secretName": secret_name}
         rules.append(host)
         tls_list.append(tls)
 
