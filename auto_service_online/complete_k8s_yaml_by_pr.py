@@ -131,7 +131,8 @@ def complete_ingress_yaml(data):
             "path": "/"}]
 
         host["http"]["paths"] = backend
-        tls = {"hosts": [].append(d), "secretName": secret_name}
+        dom = [d]
+        tls = {"hosts": dom, "secretName": secret_name}
         rules.append(host)
         tls_list.append(tls)
 
