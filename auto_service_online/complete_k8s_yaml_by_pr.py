@@ -158,15 +158,12 @@ def complete_secret_yaml(data):
     project = data.get("project")
 
     values = {}
-    key_path = {"key": "", "path": ""}
     for c in data.get("containers"):
         if c.get("env") is not None:
             for e in c.get("env"):
                 key = e["valueFrom"]["secretKeyRef"]["key"]
                 path = "secrets/data/{}/{}".format(community, project)
-                key_path["key"] = key
-                key_path["path"] = path
-                print(key_path)
+                key_path = {"key": key, "path": path}
                 values[key] = key_path
                 if e.get("valueFrom")["secretKeyRef"]["name"] != secret_name:
                     secret_name = e.get("valueFrom")["secretKeyRef"]["name"]
@@ -176,10 +173,8 @@ def complete_secret_yaml(data):
                 if vv.get("subPath") is not None:
                     key = vv.get("subPath")
                     path = "secrets/data/{}/{}".format(community, project)
-                    key_path["key"] = key
-                    key_path["path"] = path
+                    key_path = {"key": key, "path": path}
                     values[key] = key_path
-    print(values)
     with open("kubectl-yaml-creator/demo/secret.yaml", "r", encoding="utf-8") as f:
         with open("output/secret.yaml", "a", encoding="utf-8") as f2:
             secret_template = yaml.load(f.read(), Loader=yaml.SafeLoader)
