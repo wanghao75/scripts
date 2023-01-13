@@ -48,7 +48,8 @@ def check_pods_alive():
 
 
 def replace_test_to_product(project):
-    os.popen("sed -i 's/deploy-workspace/%s/g' `grep deploy-workspace -rl ./output" % project)
+    res = os.popen("sed -i 's/deploy-workspace/{}/g' `grep deploy-workspace -rl ./output`".format(project)).readlines()
+    print(res)
 
 
 def prepare_for_pr(gh_user, ge_user, gh_token, ge_token, gh_email, ge_email, community, proj):
@@ -122,7 +123,7 @@ def feed_back_to_pr(response_pr: bool, reason: str, t: str, o: str, r: str, n: s
 
 
 def remove_pods_in_test_environment():
-    os.system("kubectl delete -f deploy.yaml")
+    os.system("kubectl delete -f ../../deploy.yaml")
 
 
 def main():
