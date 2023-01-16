@@ -143,24 +143,32 @@ def main():
     data = load_checklist_yaml()
     prj = data.get("project")
     cmt = data.get("community")
+    service_type = data.get("cronjob")
 
     # deploy to test cluster
     deploy_status = use_kubectl_to_deploy_project(prj)
     if not deploy_status:
         feed_back_to_pr(True, "because apply this project to test cluster failed", gee_token, org, repo, number)
         sys.exit(1)
-
-    # check pods alive
-    status = check_pods_alive()
-    if status:
-        replace_test_to_product(prj)
+    
+    # check service is cronjob or not
+    if service_type is not None:
         prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, cmt, prj)
         remove_pods_in_test_environment()
 
+    # check pods alive
     else:
-        feed_back_to_pr(True, "because pod that has been applied to test cluster is not alive, service is unreachable",
-                        gee_token, org, repo, number)
-        sys.exit(1)
+        status = check_pods_alive()
+        if status:
+            replace_test_to_product(prj)
+            prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, cmt, prj)
+            remove_pods_in_test_environment()
+
+        else:
+            feed_back_to_pr(True,
+                            "because pod that has been applied to test cluster is not alive, service is unreachable",
+                            gee_token, org, repo, number)
+            sys.exit(1)
 
 
 if __name__ == '__main__':
