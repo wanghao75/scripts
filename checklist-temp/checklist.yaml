@@ -1,0 +1,83 @@
+domain:                              # 域名配置，如存在多个域名则填写多个
+                                     # 服务域名
+                                     # 服务域名
+project:                             # 项目名
+namespace:                           # 服务命名空间,与project保持一致
+replicas:                            # 服务副本数
+serviceExportType:                   # 服务对外暴露类型， NodePort， LoadBalancer， Ingress， 使用NodePort
+nodePort:                            # 当服务对外暴露类型为NodePort时使用，nodePort端口范围30000-32767，一个端口对应一个服务,规范：80:30000(服务端口:nodePort端口)，非NodePort则去除此项
+ingress-controller:                  # 如需要对外暴露服务，且当对外暴露服务类型为Ingress时使用，非Ingress则去除此项
+community:                           # 服务归属的社区，如openeuler，mindspore，openlookeng，opengauss
+
+cronjob:                             # 是否是定时任务，布尔值，默认值为false，不填写或删除此字段均认为是false
+schedule:                            # 定时任务触发时间，与cronjob成对出现
+
+# 如服务有依赖其他多个服务，则需要增加多个containers下的服务配置块
+containers:
+  - name:                            # 容器名称
+    args:                            # 容器内代码运行所需参数
+    image:                           # 镜像id
+    volumeMounts:                    # 挂载
+      - mountPath:                   # 挂载路径
+        name:                        # 名称
+      - mountPath:
+        name:
+        subPath:                     # 映射卷名
+      - mountPath:                   # 配置文件路径，若无，则删除此块
+        name:                        # 配置文件名
+        readOnly:                    # 只读
+    resources:                       # 资源
+      requests:                      # 容器启动必需资源
+        cpu:
+        memory:
+      limits:                        # 最大限制资源
+        cpu:
+        memory:
+    env:                             # 环境变量
+      - name:                        # 变量名
+        valueFrom:
+          secretKeyRef:
+            key:                     # 变量名，与name的值一致
+            name:                    # secret文件名，如不设置，后续均不设置，系统会进行默认生成，如要自行设置，则所有的值保持一致
+    command:                         # 容器启动时所需的命令
+    readinessProbe:                  # 容器就绪探针定义
+      tcpSocket:
+        port:                       # 监听端口，与容器暴露端口一致
+      initialDelaySeconds: 10
+      failureThreshold: 3
+      successThreshold: 1
+      periodSeconds: 10
+      timeoutSeconds: 5
+    livenessProbe:                   # 容器存活探针定义
+      tcpSocket:
+        port:                        # 监听端口，与容器暴露端口一致
+      initialDelaySeconds: 20
+      periodSeconds: 20
+      successThreshold: 1
+      failureThreshold: 3
+      timeoutSeconds: 5
+    imagePullPolicy: IfNotPresent
+    ports:
+    - containerPort:                 # 容器暴露的端口
+      name: http
+      protocol: TCP
+
+volumes:
+- name:                              # 挂载名称
+  persistentVolumeClaim:             # 物理存储，使用此字段则表明使用数据盘进行挂载
+    claimName:                       # 声明的物理存储盘名称,建议使用project+“-data-volume”的格式命名，如 robot-gitee-data-volume
+
+- name:                              # 挂载名称
+  secret:
+    secretName:                      # 隐秘文件名，建议使用project+“-secret”的格式命名，如 website-secret
+
+- name:                              # 配置文件名,同上volumeMounts中名字,若无，则删除此块
+  configMap:
+    name:                            # 配置名
+
+storage:                             # 挂载的数据盘大小 (只针对需要物理存储的数据盘时设置)
+storageClassName:                    # 挂载数据盘类型
+
+configMap:                           # 服务所需的配置项，如果有则填写，无则忽略
+  name:                              # 配置名，同上volumes中
+  data:                              # 配置文件内容,如无则不填
