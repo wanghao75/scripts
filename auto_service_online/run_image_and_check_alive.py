@@ -126,6 +126,10 @@ def remove_pods_in_test_environment():
     os.system("kubectl delete -f ../../deploy.yaml")
 
 
+def remove_jobs_in_test_environment(project):
+    os.system("kubectl delete cronjob %s" % project)
+
+
 def main():
     ghub_token = sys.argv[1]
     org = sys.argv[2]
@@ -150,11 +154,11 @@ def main():
     if not deploy_status:
         feed_back_to_pr(True, "because apply this project to test cluster failed", gee_token, org, repo, number)
         sys.exit(1)
-    
+
     # check service is cronjob or not
     if service_type is not None:
         prepare_for_pr(ghub_user, gee_user, ghub_token, gee_token, ghub_email, gee_email, cmt, prj)
-        remove_pods_in_test_environment()
+        remove_jobs_in_test_environment(prj)
 
     # check pods alive
     else:
