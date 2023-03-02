@@ -46,7 +46,7 @@ def get_project_and_series_information():
 
 
 def config_git():
-    os.popen("git config --global user.email {};git config --global user.name {}".format(os.getenv("CI_OT_EMAIL"), os.getenv("CI_BOT_NAME")))
+    os.popen("git config --global user.email {};git config --global user.name {}".format(os.getenv("CI_BOT_EMAIL"), os.getenv("CI_BOT_NAME")))
 
 
 def config_get_mail(u_name, u_pass, email_server, path_of_sh):
