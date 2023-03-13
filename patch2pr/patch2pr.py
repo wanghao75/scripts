@@ -151,7 +151,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
 
     data = {
         "access_token": token,
-        "head": "wanghaosq:" + source_branch,
+        "head": "patch-bot:" + source_branch,
         "base": base_branch,
         "title": title,
         "body": body,
