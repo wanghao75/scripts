@@ -86,7 +86,7 @@ def config_get_mail(u_name, u_pass, email_server, path_of_sh):
 
     destination = ["[destination]", "type = MDA_external", "path = {}".format(path_of_sh), "ignore_stderr = true"]
 
-    options = ["[options]", "delete = false", "message_log = /home/getmail.log",
+    options = ["[options]", "delete = false", "message_log = /home/patches/getmail.log",
                "message_log_verbose = true", "read_all = false", "received = false", "delivered_to = false"]
 
     with open("/home/patches/getmailrc", "a", encoding="utf-8") as f:
