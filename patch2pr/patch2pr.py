@@ -20,14 +20,31 @@ BRANCHES_MAP = {
 }
 
 
+def make_fork_same_with_origin(branch_name):
+    remotes = os.popen("git remote -v").readlines()
+    remote_flag = False
+    for remote in remotes:
+        if remote.startswith("upstream "):
+            remote_flag = False
+            continue
+        else:
+            remote_flag = True
+
+    if remote_flag:
+        os.popen("git remote add upstream https://gitee.com/openeuler/kernel.git")
+    else:
+        os.popen("git checkout {}".format(branch_name)).readlines()
+        os.popen("git pull upstream {}".format(branch_name)).readlines()
+
+
 def get_mail_step():
     if os.path.exists("/home/patches/project_series.txt"):
         os.remove("/home/patches/project_series.txt")
-    os.popen('getmail --getmaildir="/home/" --idle INBOX').readlines()
+    os.popen('getmail --getmaildir="/home/patches/" --idle INBOX').readlines()
 
 
 def download_patches_by_using_git_pw(ser_id):
-    os.popen("rm -rf /home/patches/*")
+    # os.popen("rm -rf /home/patches/*")
     if not os.path.exists("/home/patches/{}".format(ser_id)):
         os.popen("mkdir -p /home/patches/{}".format(ser_id))
     res = os.popen("git-pw series download {} /home/patches/{}/".format(ser_id, ser_id)).readlines()
@@ -46,26 +63,33 @@ def get_project_and_series_information():
 
 
 def config_git():
-    os.popen("git config --global user.email {};git config --global user.name {}".format(os.getenv("CI_BOT_EMAIL"), os.getenv("CI_BOT_NAME")))
+    os.popen("git config --global user.email {};git config --global user.name {}".format(os.getenv("CI_BOT_EMAIL"),
+                                                                                         os.getenv("CI_BOT_NAME")))
 
 
 def config_get_mail(u_name, u_pass, email_server, path_of_sh):
     if os.path.exists("/home/patches/getmailrc"):
-        return
+        with open("/home/patches/getmailrc", "r", encoding="utf-8") as ff:
+            content = ff.readlines()
+            if len(content) == 0:
+                os.popen("rm -f /home/patches/getmailrc").readlines()
+                os.popen("touch /home/patches/getmailrc").readlines()
+            else:
+                return
     else:
         os.popen("touch /home/patches/getmailrc").readlines()
 
-    retriever = ["[retriever]", "type = SimplePOP3Retriever",
+    retriever = ["[retriever]", "type = SimplePOP3SSLRetriever",
                  "server = {}".format(email_server), "username = {}".format(u_name), "password = {}".format(u_pass),
-                 "mailboxes = ALL"
+                 "port = {}".format(os.getenv("EMAIL_PORT"))
                  ]
 
     destination = ["[destination]", "type = MDA_external", "path = {}".format(path_of_sh), "ignore_stderr = true"]
 
-    options = ["[options]", "delete = false", "message_log = /home/patches/getmail.log",
+    options = ["[options]", "delete = false", "message_log = /home/getmail.log",
                "message_log_verbose = true", "read_all = false", "received = false", "delivered_to = false"]
 
-    with open("/home/getmailrc", "a", encoding="utf-8") as f:
+    with open("/home/patches/getmailrc", "a", encoding="utf-8") as f:
         f.writelines([r + "\n" for r in retriever])
         f.writelines([r + "\n" for r in destination])
         f.writelines([r + "\n" for r in options])
@@ -79,16 +103,17 @@ def config_git_pw(project_name, server_link, token):
 # if use the patchwork, we can make it by the following codes
 # use patches
 def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
-    if not os.path.exists("/home/kernel"):
-        os.chdir("/home")
-        r = os.popen("git clone https://{}:{}@gitee.com/wanghaosq/kernel.git".format(user, token)).readlines()
+    if not os.path.exists("/home/patches/kernel"):
+        os.chdir("/home/patches")
+        r = os.popen("git clone https://{}:{}@gitee.com/patch-bot/kernel.git".format(user, token)).readlines()
         for res in r:
             if "error:" in res or "fatal:" in res:
-                os.popen("git clone https://{}:{}@gitee.com/wanghaosq/kernel.git".format(user, token)).readlines()
-        os.chdir("/home/kernel")
+                os.popen("git clone https://{}:{}@gitee.com/patch-bot/kernel.git".format(user, token)).readlines()
+        os.chdir("/home/patches/kernel")
+        make_fork_same_with_origin(origin_branch)
     else:
-        os.chdir("/home/kernel")
-        os.popen("git pull").readlines()
+        os.chdir("/home/patches/kernel")
+        make_fork_same_with_origin(origin_branch)
 
     # delete all branches startswith patch
     # branches_list = os.popen("git branch").readlines()
@@ -126,13 +151,13 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
 
     data = {
         "access_token": token,
-        "head": source_branch,
+        "head": "wanghaosq:" + source_branch,
         "base": base_branch,
         "title": title,
         "body": body,
         "prune_source_branch": "true"
     }
-    res = requests.post(url="https://gitee.com/api/v5/repos/wanghaosq/kernel/pulls", data=data)
+    res = requests.post(url="https://gitee.com/api/v5/repos/patch-bot/kernel/pulls", data=data)
 
     if res.status_code == 201:
         pull_link = res.json().get("url")
@@ -202,7 +227,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                 if row[0].__contains__("01/") or row[0].__contains__("1/"):
                     first_path_mail_name = row[0]
 
-        cur.execute("SELECT headers from patchwork_patch where series_id={} and name='{}'".format(ser_id, first_path_mail_name))
+        cur.execute(
+            "SELECT headers from patchwork_patch where series_id={} and name='{}'".format(ser_id, first_path_mail_name))
         patches_headers_rows = cur.fetchall()
         for row in patches_headers_rows:
             for string in row[0].split("\n"):
@@ -214,7 +240,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                         who_is_email_list = string.split(" ")[1]
                 if string.startswith("From: "):
                     patch_sender_email = string.split("<")[1].split(">")[0]
-                if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/"% who_is_email_list):
+                if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
 
         return patch_sender_email, body, email_list_link_of_patch
@@ -267,7 +293,7 @@ def main():
         return
     # config git
     config_git()
-    
+
     # config get-mail tools
     config_get_mail(user_email, user_pass, mail_server, "/home/patchwork/patchwork/patchwork/bin/parsemail.sh")
 
@@ -275,7 +301,7 @@ def main():
     get_mail_step()
 
     information = get_project_and_series_information()
-    if len(information):
+    if len(information) == 0:
         logging.info("not a new series of patches which received by get-mail tool")
         return
 
@@ -284,8 +310,18 @@ def main():
         series_id = i.split(":")[1]
 
         tag = i.split(":")[2].split("[")[1].split("]")[0]
+        if "PR" not in tag:
+            continue
+        
+        branch = ""
         if tag.__contains__(","):
-            branch = tag.split(",")[0]
+            if tag.count(",") == 1:
+                branch = tag.split(",")[1]
+            elif tag.count(",") >= 2:
+                if tag.split(",")[-1] == project_name:
+                    branch = tag.split(",")[-1]
+                else:
+                    branch = tag.split(",")[-2]
         else:
             branch = tag
 
@@ -300,10 +336,13 @@ def main():
         emails_to_notify = [sender_email]
 
         # use patches
-        source_branch = make_branch_and_apply_patch(repo_user, gitee_token, BRANCHES_MAP[branch], series_id)
+        target_branch = BRANCHES_MAP.get(branch)
+        if target_branch is None:
+            continue
+        source_branch = make_branch_and_apply_patch(repo_user, not_cibot_gitee_token, target_branch, series_id)
 
         # make pr
-        make_pr_to_summit_commit(source_branch, BRANCHES_MAP[branch], not_cibot_gitee_token,
+        make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify)
 
 
