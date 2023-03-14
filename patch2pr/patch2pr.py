@@ -32,9 +32,8 @@ def make_fork_same_with_origin(branch_name):
 
     if remote_flag:
         os.popen("git remote add upstream https://gitee.com/new-op/kernel.git")
-    else:
-        os.popen("git checkout {}".format(branch_name)).readlines()
-        os.popen("git pull upstream {}".format(branch_name)).readlines()
+    os.popen("git checkout {}".format(branch_name)).readlines()
+    os.popen("git pull upstream {}".format(branch_name)).readlines()
 
 
 def get_mail_step():
