@@ -31,7 +31,7 @@ def make_fork_same_with_origin(branch_name):
             remote_flag = True
 
     if remote_flag:
-        os.popen("git remote add upstream https://gitee.com/openeuler/kernel.git")
+        os.popen("git remote add upstream https://gitee.com/new-op/kernel.git")
     else:
         os.popen("git checkout {}".format(branch_name)).readlines()
         os.popen("git pull upstream {}".format(branch_name)).readlines()
@@ -157,7 +157,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
         "body": body,
         "prune_source_branch": "true"
     }
-    res = requests.post(url="https://gitee.com/api/v5/repos/patch-bot/kernel/pulls", data=data)
+    res = requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls", data=data)
 
     if res.status_code == 201:
         pull_link = res.json().get("url")
