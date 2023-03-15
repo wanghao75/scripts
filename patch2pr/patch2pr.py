@@ -282,7 +282,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
 def main():
     server = os.getenv("PATCHWORK_SERVER", "")
     server_token = os.getenv("PATCHWORK_TOKEN", "")
-    repo_user = os.getenv("REPO_OWNER", "")
+    # repo_user = os.getenv("REPO_OWNER", "")
+    repo_user = os.getenv("CI_BOT_NAME", "")
     gitee_token = os.getenv("GITEE_TOKEN", "")
     not_cibot_gitee_token = os.getenv("GITEE_TOKEN_NOT_CI_BOT", "")
     user_email = os.getenv("EMAIL_HOST_USER", "")
