@@ -162,7 +162,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
     res = requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls", data=data)
 
     if res.status_code == 201:
-        pull_link = res.json().get("url")
+        pull_link = res.json().get("html_url")
         send_mail_to_notice_developers(pull_link, receiver_email)
 
 
