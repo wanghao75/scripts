@@ -36,6 +36,7 @@ def make_fork_same_with_origin(branch_name):
     pull_res = os.popen("git pull upstream {}".format(branch_name)).readlines()
     for p in pull_res:
         if "error:" in p or "fatal:" in p:
+            print("pull upstream error %s" % p)
             os.popen("git pull upstream {}".format(branch_name)).readlines()
 
 
