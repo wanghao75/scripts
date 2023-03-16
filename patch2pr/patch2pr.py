@@ -307,6 +307,7 @@ def main():
     information = get_project_and_series_information()
     if len(information) == 0:
         print("not a new series of patches which received by get-mail tool has been write to file")
+        os.system("cp patch2pr.log /home/patches/log.log")
         return
 
     for i in information:
@@ -348,6 +349,7 @@ def main():
         # make pr
         make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify)
+        os.system("cp patch2pr.log /home/patches/log.log")
 
 
 if __name__ == '__main__':
