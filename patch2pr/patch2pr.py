@@ -305,7 +305,7 @@ def main():
 
     information = get_project_and_series_information()
     if len(information) == 0:
-        logging.info("not a new series of patches which received by get-mail tool")
+        print("not a new series of patches which received by get-mail tool has been write to file")
         return
 
     for i in information:
