@@ -33,7 +33,7 @@ def make_fork_same_with_origin(branch_name):
     if remote_flag:
         os.popen("git remote add upstream https://gitee.com/new-op/kernel.git")
     os.popen("git checkout origin/{}".format(branch_name)).readlines()
-    fetch_res = os.popen("git pull upstream {}".format(branch_name)).readlines()
+    fetch_res = os.popen("git fetch upstream {}".format(branch_name)).readlines()
     for p in fetch_res:
         if "error:" in p or "fatal:" in p:
             logging.error("fetch upstream error %s" % p)
