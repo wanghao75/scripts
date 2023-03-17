@@ -33,11 +33,17 @@ def make_fork_same_with_origin(branch_name):
     if remote_flag:
         os.popen("git remote add upstream https://gitee.com/new-op/kernel.git")
     os.popen("git checkout origin/{}".format(branch_name)).readlines()
-    pull_res = os.popen("git pull upstream {}".format(branch_name)).readlines()
-    for p in pull_res:
+    fetch_res = os.popen("git pull upstream {}".format(branch_name)).readlines()
+    for p in fetch_res:
         if "error:" in p or "fatal:" in p:
-            print("pull upstream error %s" % p)
-            os.popen("git pull upstream {}".format(branch_name)).readlines()
+            logging.error("fetch upstream error %s" % p)
+            print("fetch upstream error %s" % p)
+    merge = os.popen("git merge upstream/{}".format(branch_name)).readlines()
+    for m in merge:
+        if "error:" in m or "fatal:" in m:
+            logging.error("fetch upstream error %s" % m)
+            print("merge upstream error %s" % m)
+    os.popen("git push").readlines()
 
 
 def get_mail_step():
@@ -307,7 +313,7 @@ def main():
     information = get_project_and_series_information()
     if len(information) == 0:
         print("not a new series of patches which received by get-mail tool has been write to file")
-        os.system("cp patch2pr.log /home/patches/log.log")
+        os.system("cp /home/patchwork/patchwork/patch2pr.log /home/patches/log.log")
         return
 
     for i in information:
@@ -317,7 +323,7 @@ def main():
         tag = i.split(":")[2].split("[")[1].split("]")[0]
         if "PR" not in tag:
             continue
-        
+
         branch = ""
         if tag.__contains__(","):
             if tag.count(",") == 1:
@@ -349,7 +355,7 @@ def main():
         # make pr
         make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify)
-        os.system("cp patch2pr.log /home/patches/log.log")
+        os.system("cp /home/patchwork/patchwork/patch2pr.log /home/patches/log.log")
 
 
 if __name__ == '__main__':
