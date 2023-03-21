@@ -234,7 +234,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         first_path_mail_name = ""
         if len(patches_names_rows) == 1:
             first_path_mail_name = patches_names_rows[0][0]
-            title_for_pr = first_path_mail_name
+            title_for_pr = first_path_mail_name.split("]")[1]
         else:
             for row in patches_names_rows:
                 if row[0].__contains__("01/") or row[0].__contains__("1/"):
@@ -276,7 +276,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
 
     if cover_content == "" or cover_headers == "" or cover_name == "":
         return "", "", "", ""
-    title_for_pr = cover_name
+    title_for_pr = cover_name.split("]")[1]
 
     cover_who_is_email_list = ""
     for ch in cover_headers.split("\n"):
