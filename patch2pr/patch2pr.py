@@ -52,6 +52,8 @@ def make_fork_same_with_origin(branch_name):
 def get_mail_step():
     if os.path.exists("/home/patches/project_series.txt"):
         os.remove("/home/patches/project_series.txt")
+    # make sure we can receive all patches-email, so we wait for five minutes
+    time.sleep(300)
     os.popen('getmail --getmaildir="/home/patches/" --idle INBOX').readlines()
 
 
@@ -219,16 +221,15 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     cur.execute("SELECT * from patchwork_series where id={}".format(ser_id))
     series_rows = cur.fetchall()
     cover_letter_id = 0
-    all_patches_in_series = 0
+    # all_patches_in_series = 0
     for row in series_rows:
         cover_letter_id = row[-1]
-        all_patches_in_series = row[4]
+        # all_patches_in_series = row[4]
 
     # check if getmail has received all patches-email when script has been started
-    cur.execute("SELECT id from patchwork_patch where series_id={}".format(ser_id))
-    number_of_patches = cur.fetchall()
-
-    #if len(number_of_patches) != all_patches_in_series:
+    # cur.execute("SELECT id from patchwork_patch where series_id={}".format(ser_id))
+    # number_of_patches = cur.fetchall()
+    # if len(number_of_patches) != all_patches_in_series:
     #    print("not receive all patches, skip")
     #    return "", "", "", ""
 
@@ -268,8 +269,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
 
         if "1/" in first_path_mail_name:
             send_mail_to_notice_developers("You have sent a series of patches to the kernel mailing list, "
-                                           "but a cover does't have been sent, so bot can not generate a pull request. "
-                                           "Please check", [patch_sender_email])
+                                           "but a cover doesn't have been sent, so bot can not generate a pull request. "
+                                           "Please check and apply a cover, then send all patches again", [patch_sender_email])
             return "", "", "", ""
 
         return patch_sender_email, body, email_list_link_of_patch, title_for_pr
