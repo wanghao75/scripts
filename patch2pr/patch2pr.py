@@ -228,9 +228,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     cur.execute("SELECT id from patchwork_patch where series_id={}".format(ser_id))
     number_of_patches = cur.fetchall()
 
-    if len(number_of_patches) != all_patches_in_series:
-        print("not receive all patches, skip")
-        return "", "", "", ""
+    #if len(number_of_patches) != all_patches_in_series:
+    #    print("not receive all patches, skip")
+    #    return "", "", "", ""
 
     # no cover
     patch_sender_email = ""
