@@ -229,6 +229,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     number_of_patches = cur.fetchall()
 
     if len(number_of_patches) != all_patches_in_series:
+        print("not receive all patches, skip")
         return "", "", "", ""
 
     # no cover
