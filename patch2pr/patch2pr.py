@@ -259,7 +259,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         if "1/" in first_path_mail_name:
             send_mail_to_notice_developers("You have sent a series of patches to the kernel mailing list, "
                                            "but a cover does't have been sent, so bot can not generate a pull request. "
-                                           "Please check", [patch_sender_email])
+                                           "Please check and create a cover, then try to send all patches again", [patch_sender_email])
             return "", "", "", ""
 
         return patch_sender_email, body, email_list_link_of_patch, title_for_pr
