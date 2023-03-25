@@ -76,9 +76,8 @@ def get_project_and_series_information():
     return infor
 
 
-def config_git():
-    os.popen("git config --global user.email {};git config --global user.name {}".format(os.getenv("CI_BOT_EMAIL"),
-                                                                                         os.getenv("CI_BOT_NAME")))
+def config_git(git_email, git_name):
+    os.popen("git config --global user.email {};git config --global user.name {}".format(git_email, git_name))
 
 
 def config_get_mail(u_name, u_pass, email_server, path_of_sh):
@@ -242,6 +241,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
 
     # no cover
     patch_sender_email = ""
+    patch_send_name = ""
     body = ""
     email_list_link_of_patch = ""
     title_for_pr = ""
@@ -271,6 +271,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                         who_is_email_list = string.split(" ")[1]
                 if string.startswith("From: "):
                     patch_sender_email = string.split("<")[1].split(">")[0]
+                    patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + string.split("<")[0].split("From:")[1].split(" ")[2]
                 if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
 
@@ -279,6 +280,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                                            "but a cover doesn't have been sent, so bot can not generate a pull request. "
                                            "Please check and apply a cover, then send all patches again", [patch_sender_email])
             return "", "", "", ""
+
+        # config git
+        config_git(patch_sender_email, patch_send_name)
 
         return patch_sender_email, body, email_list_link_of_patch, title_for_pr
 
@@ -307,6 +311,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
             email_list_link_of_patch = ch.replace("<", "").replace(">", "").replace("message", "thread")
         if ch.startswith("From: "):
             patch_sender_email = ch.split("From: ")[1].split("<")[1].split(">")[0]
+            patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + ch.split("<")[0].split("From:")[1].split(" ")[2]
 
     for ct in cover_content.split("\n"):
         if ct.__contains__("(+)") or ct.__contains__("(-)") or "mode" in ct or "| " in ct:
@@ -318,6 +323,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                 body = ""
             else:
                 body += ct + "\n"
+
+    # config git
+    config_git(patch_sender_email, patch_send_name)
 
     return patch_sender_email, body, email_list_link_of_patch, title_for_pr
 
@@ -337,8 +345,6 @@ def main():
             user_email == "" or user_pass == "" or mail_server == "":
         logging.error("args can not be empty")
         return
-    # config git
-    config_git()
 
     # config get-mail tools
     config_get_mail(user_email, user_pass, mail_server, "/home/patchwork/patchwork/patchwork/bin/parsemail.sh")
@@ -357,13 +363,18 @@ def main():
         series_id = i.split(":")[1]
 
         tag = i.split(":")[2].split("[")[1].split("]")[0]
-        if "PR" not in tag:
-            continue
+
+        # no need check "PR" field in tag
+        #if "PR" not in tag:
+        #    continue
 
         branch = ""
         if tag.__contains__(","):
             if tag.count(",") == 1:
-                branch = tag.split(",")[1]
+                if tag.split(",")[-1] == project_name:
+                    branch = tag.split(",")[-1]
+                else:
+                    branch = tag.split(",")[-2]
             elif tag.count(",") >= 2:
                 if tag.split(",")[-1] == project_name:
                     branch = tag.split(",")[-1]
