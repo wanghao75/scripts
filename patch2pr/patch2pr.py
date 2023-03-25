@@ -182,8 +182,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
             "access_token": token,
             "body": "/check-cla",
         }
-        requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls/{}/comments".format(
-            res.json().get("number")), data=comment_data)
+        requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls/{}/comments".format(res.json().get("number")), data=comment_data)
 
 
 # use email to notice that pr has been created
