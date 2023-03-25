@@ -374,12 +374,12 @@ def main():
                 if tag.split(",")[-1] == project_name:
                     branch = tag.split(",")[-1]
                 else:
-                    branch = tag.split(",")[-2]
+                    branch = tag.split(",")[0]
             elif tag.count(",") >= 2:
                 if tag.split(",")[-1] == project_name:
                     branch = tag.split(",")[-1]
                 else:
-                    branch = tag.split(",")[-2]
+                    branch = tag.split(",")[0]
         else:
             branch = tag
 
@@ -399,6 +399,7 @@ def main():
         # use patches
         target_branch = BRANCHES_MAP.get(branch)
         if target_branch is None:
+            print("branch is ", branch, "can not match any branches")
             continue
         source_branch = make_branch_and_apply_patch(repo_user, not_cibot_gitee_token, target_branch, series_id)
 
