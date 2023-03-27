@@ -80,6 +80,12 @@ def config_git(git_email, git_name):
     os.popen("git config --global user.email {};git config --global user.name {}".format(git_email, git_name))
 
 
+def un_config_git():
+    # make sure not push code to git by using the before one's information while git config not work
+    os.popen("git config --global --unset user.name")
+    os.popen("git config --global --unset user.email")
+
+
 def config_get_mail(u_name, u_pass, email_server, path_of_sh):
     if os.path.exists("/home/patches/getmailrc"):
         with open("/home/patches/getmailrc", "r", encoding="utf-8") as ff:
@@ -145,6 +151,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
         if am_r.__contains__("Patch failed at"):
             am_success = False
             logging.error("failed to apply patch, reason is %s" % am_r)
+            print("failed to apply patch, reason is %s" % am_r)
             break
         else:
             am_success = True
@@ -156,7 +163,10 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
                 time.sleep(20)
                 logging.error("git push failed, %s, try again" % p)
                 os.popen("git push origin %s" % new_branch).readlines()
+        un_config_git()
         return new_branch
+    else:
+        un_config_git()
 
 
 # summit a pr
