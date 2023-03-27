@@ -77,7 +77,7 @@ def get_project_and_series_information():
 
 
 def config_git(git_email, git_name):
-    os.popen("git config --global user.email {};git config --global user.name {}".format(git_email, git_name))
+    os.popen("git config --global user.email {};git config --global user.name '{}'".format(git_email, git_name))
 
 
 def un_config_git():
@@ -170,7 +170,8 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
 
 
 # summit a pr
-def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_list, cover_letter, receiver_email, pr_title, commit):
+def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_list, cover_letter, receiver_email,
+                             pr_title, commit):
     title = pr_title
     if pr_url_in_email_list or cover_letter:
         body = "PR sync from: {}\n{} \n{}".format(commit, pr_url_in_email_list, cover_letter)
@@ -186,7 +187,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
         "prune_source_branch": "true"
     }
     res = requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls", data=data)
-    
+
     try_times = 0
     while True:
         if res.status_code != 201:
@@ -200,14 +201,17 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
 
     if res.status_code == 201:
         pull_link = res.json().get("html_url")
-        send_mail_to_notice_developers("your patch has been converted to a pull request, pull request link is: \n%s" % pull_link, receiver_email)
+        send_mail_to_notice_developers(
+            "your patch has been converted to a pull request, pull request link is: \n%s" % pull_link, receiver_email)
 
         # add /check-cla comment to pr
         comment_data = {
             "access_token": token,
             "body": "/check-cla",
         }
-        requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls/{}/comments".format(res.json().get("number")), data=comment_data)
+        requests.post(
+            url="https://gitee.com/api/v5/repos/new-op/kernel/pulls/{}/comments".format(res.json().get("number")),
+            data=comment_data)
 
 
 # use email to notice that pr has been created
@@ -299,14 +303,16 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                 if string.startswith("From: "):
                     committer = string.split("From:")[1]
                     patch_sender_email = string.split("<")[1].split(">")[0]
-                    patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + string.split("<")[0].split("From:")[1].split(" ")[2]
+                    patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
+                                      string.split("<")[0].split("From:")[1].split(" ")[2]
                 if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
 
         if "1/" in first_path_mail_name:
             send_mail_to_notice_developers("You have sent a series of patches to the kernel mailing list, "
                                            "but a cover doesn't have been sent, so bot can not generate a pull request. "
-                                           "Please check and apply a cover, then send all patches again", [patch_sender_email])
+                                           "Please check and apply a cover, then send all patches again",
+                                           [patch_sender_email])
             return "", "", "", ""
 
         # config git
@@ -340,7 +346,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         if ch.startswith("From: "):
             committer = ch.split("From:")[1]
             patch_sender_email = ch.split("From: ")[1].split("<")[1].split(">")[0]
-            patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + ch.split("<")[0].split("From:")[1].split(" ")[2]
+            patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
+                              ch.split("<")[0].split("From:")[1].split(" ")[2]
 
     for ct in cover_content.split("\n"):
         if ct.__contains__("(+)") or ct.__contains__("(-)") or "mode" in ct or "| " in ct:
@@ -393,7 +400,7 @@ def main():
         tag = i.split(":")[2].split("[")[1].split("]")[0]
 
         # no need check "PR" field in tag
-        #if "PR" not in tag:
+        # if "PR" not in tag:
         #    continue
 
         branch = ""
