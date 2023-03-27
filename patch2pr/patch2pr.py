@@ -150,7 +150,12 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
             am_success = True
 
     if am_success:
-        os.popen("git push origin %s" % new_branch).readlines()
+        push_res = os.popen("git push origin %s" % new_branch).readlines()
+        for p in push_res:
+            if "error:" in p:
+                time.sleep(20)
+                logging.error("git push failed, %s, try again" % p)
+                os.popen("git push origin %s" % new_branch).readlines()
         return new_branch
 
 
