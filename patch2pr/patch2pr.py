@@ -186,6 +186,17 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
         "prune_source_branch": "true"
     }
     res = requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls", data=data)
+    
+    try_times = 0
+    while True:
+        if res.status_code != 201:
+            if try_times >= 2:
+                print("new a pull request failed, ", res.status_code, res.json())
+                break
+            res = requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls", data=data)
+            try_times += 1
+        else:
+            break
 
     if res.status_code == 201:
         pull_link = res.json().get("html_url")
@@ -373,7 +384,6 @@ def main():
     information = get_project_and_series_information()
     if len(information) == 0:
         print("not a new series of patches which received by get-mail tool has been write to file")
-        os.system("cp /home/patchwork/patchwork/patch2pr.log /home/patches/log.log")
         return
 
     for i in information:
@@ -424,7 +434,6 @@ def main():
         # make pr
         make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify, title_pr, comm)
-        os.system("cp /home/patchwork/patchwork/patch2pr.log /home/patches/log.log")
 
 
 if __name__ == '__main__':
