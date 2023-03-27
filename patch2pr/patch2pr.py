@@ -155,10 +155,10 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
 
 
 # summit a pr
-def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_list, cover_letter, receiver_email, pr_title):
+def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_list, cover_letter, receiver_email, pr_title, commit):
     title = pr_title
     if pr_url_in_email_list or cover_letter:
-        body = "PR sync from: \n{} \n{}".format(pr_url_in_email_list, cover_letter)
+        body = "PR sync from: {}\n{} \n{}".format(commit, pr_url_in_email_list, cover_letter)
     else:
         body = ""
 
@@ -245,6 +245,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     body = ""
     email_list_link_of_patch = ""
     title_for_pr = ""
+    committer = ""
 
     if cover_letter_id is None or cover_letter_id == 0:
         cur.execute("SELECT name from patchwork_patch where series_id={}".format(ser_id))
@@ -270,6 +271,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                     else:
                         who_is_email_list = string.split(" ")[1]
                 if string.startswith("From: "):
+                    committer = string.split("From:")[1]
                     patch_sender_email = string.split("<")[1].split(">")[0]
                     patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + string.split("<")[0].split("From:")[1].split(" ")[2]
                 if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
@@ -284,7 +286,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         # config git
         config_git(patch_sender_email, patch_send_name)
 
-        return patch_sender_email, body, email_list_link_of_patch, title_for_pr
+        return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer
 
     cur.execute("SELECT * from patchwork_cover where id={}".format(cover_letter_id))
     cover_rows = cur.fetchall()
@@ -310,6 +312,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         if ch.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % cover_who_is_email_list):
             email_list_link_of_patch = ch.replace("<", "").replace(">", "").replace("message", "thread")
         if ch.startswith("From: "):
+            committer = ch.split("From:")[1]
             patch_sender_email = ch.split("From: ")[1].split("<")[1].split(">")[0]
             patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + ch.split("<")[0].split("From:")[1].split(" ")[2]
 
@@ -327,7 +330,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     # config git
     config_git(patch_sender_email, patch_send_name)
 
-    return patch_sender_email, body, email_list_link_of_patch, title_for_pr
+    return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer
 
 
 def main():
@@ -389,7 +392,7 @@ def main():
         download_patches_by_using_git_pw(series_id)
 
         # get sender email and cover-letter-body
-        sender_email, letter_body, sync_pr, title_pr = get_email_content_sender_and_covert_to_pr_body(series_id)
+        sender_email, letter_body, sync_pr, title_pr, comm = get_email_content_sender_and_covert_to_pr_body(series_id)
 
         if sender_email == "" and letter_body == "" and sync_pr == "" and title_pr == "":
             continue
@@ -405,7 +408,7 @@ def main():
 
         # make pr
         make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
-                                 sync_pr, letter_body, emails_to_notify, title_pr)
+                                 sync_pr, letter_body, emails_to_notify, title_pr, comm)
         os.system("cp /home/patchwork/patchwork/patch2pr.log /home/patches/log.log")
 
 
