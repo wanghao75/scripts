@@ -116,7 +116,7 @@ def config_get_mail(u_name, u_pass, email_server, path_of_sh):
 
 def config_git_pw(project_name, server_link, token):
     os.popen("git config --global pw.server {};git config --global pw.token {};git config --global pw.project {}"
-             .format(server_link, token, project_name))
+             .format(server_link, token, project_name)).readlines()
 
 
 # if use the patchwork, we can make it by the following codes
@@ -162,6 +162,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
             if "error:" in p:
                 time.sleep(20)
                 logging.error("git push failed, %s, try again" % p)
+		print("git push failed, %s, try again" % p)
                 os.popen("git push origin %s" % new_branch).readlines()
         un_config_git()
         return new_branch
@@ -215,7 +216,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
 
 
 # use email to notice that pr has been created
-def send_mail_to_notice_developers(content, email_address):
+def send_mail_to_notice_developers(content, email_address, cc_address, subject):
     import smtplib
     from email.mime.text import MIMEText
 
@@ -229,14 +230,20 @@ def send_mail_to_notice_developers(content, email_address):
     message = MIMEText(content, 'plain', 'utf-8')
     message['From'] = "patchwork bot <{}>".format(sender)
     message['To'] = receivers
-    message['Subject'] = title
-
+    if cc_address:
+        message['Cc'] = ",".join(cc_address)
+    if subject:
+        message['Subject'] = "Re: " + subject
+    else:
+        message['Subject'] = title
+    notice_list = email_address
+    notice_list.extend(cc_address)
     try:
         smtpObj = smtplib.SMTP(mail_host, os.getenv("SEND_EMAIL_PORT", 25))
         smtpObj.ehlo()
         smtpObj.starttls()
         smtpObj.login(mail_user, mail_pass)
-        smtpObj.sendmail(sender, receivers.split(","), message.as_string())
+        smtpObj.sendmail(sender, notice_list, message.as_string())
         smtpObj.quit()
     except smtplib.SMTPException as e:
         import logging
@@ -276,6 +283,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     email_list_link_of_patch = ""
     title_for_pr = ""
     committer = ""
+    sub = ""
+    cc = []
 
     if cover_letter_id is None or cover_letter_id == 0:
         cur.execute("SELECT name from patchwork_patch where series_id={}".format(ser_id))
@@ -284,6 +293,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         if len(patches_names_rows) == 1:
             first_path_mail_name = patches_names_rows[0][0]
             title_for_pr = first_path_mail_name.split("]")[1]
+	    sub = first_path_mail_name
         else:
             for row in patches_names_rows:
                 if row[0].__contains__("01/") or row[0].__contains__("1/"):
@@ -307,18 +317,19 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                                       string.split("<")[0].split("From:")[1].split(" ")[2]
                 if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
+        cc.append(who_is_email_list)
 
         if "1/" in first_path_mail_name:
             send_mail_to_notice_developers("You have sent a series of patches to the kernel mailing list, "
                                            "but a cover doesn't have been sent, so bot can not generate a pull request. "
                                            "Please check and apply a cover, then send all patches again",
-                                           [patch_sender_email])
+                                           [patch_sender_email], [], "")
             return "", "", "", ""
 
         # config git
         config_git(patch_sender_email, patch_send_name)
 
-        return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer
+        return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub
 
     cur.execute("SELECT * from patchwork_cover where id={}".format(cover_letter_id))
     cover_rows = cur.fetchall()
@@ -332,6 +343,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
 
     if cover_content == "" or cover_headers == "" or cover_name == "":
         return "", "", "", ""
+    sub = cover_name
     title_for_pr = cover_name.split("]")[1]
 
     cover_who_is_email_list = ""
@@ -348,6 +360,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
             patch_sender_email = ch.split("From: ")[1].split("<")[1].split(">")[0]
             patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
                               ch.split("<")[0].split("From:")[1].split(" ")[2]
+    cc.append(cover_who_is_email_list)
 
     for ct in cover_content.split("\n"):
         if ct.__contains__("(+)") or ct.__contains__("(-)") or "mode" in ct or "| " in ct:
@@ -363,7 +376,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     # config git
     config_git(patch_sender_email, patch_send_name)
 
-    return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer
+    return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub
 
 
 def main():
@@ -418,18 +431,24 @@ def main():
         else:
             branch = tag
 
+	# in production environment， deploy on one branch
+        if branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
+            logging.info("branch doesn't match, ignore it")
+            print("branch doesn't match, ignore it")
+            return
         config_git_pw(project_name, server, server_token)
 
         # download series of patches by series_id
         download_patches_by_using_git_pw(series_id)
 
         # get sender email and cover-letter-body
-        sender_email, letter_body, sync_pr, title_pr, comm = get_email_content_sender_and_covert_to_pr_body(series_id)
+        sender_email, letter_body, sync_pr, title_pr, comm, cc, subject_str = get_email_content_sender_and_covert_to_pr_body(series_id)
 
         if sender_email == "" and letter_body == "" and sync_pr == "" and title_pr == "":
             continue
 
         emails_to_notify = [sender_email]
+	cc_list = cc
 
         # use patches
         target_branch = BRANCHES_MAP.get(branch)
@@ -440,7 +459,7 @@ def main():
 
         # make pr
         make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
-                                 sync_pr, letter_body, emails_to_notify, title_pr, comm)
+                                 sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str)
 
 
 if __name__ == '__main__':
