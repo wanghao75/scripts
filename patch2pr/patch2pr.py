@@ -55,6 +55,8 @@ def get_mail_step():
     # make sure we can receive all patches-email, so we wait for five minutes
     time.sleep(300)
     os.popen('getmail --getmaildir="/home/patches/" --idle INBOX').readlines()
+    time.sleep(5)
+    os.popen('getmail --getmaildir="/home/patches/" --idle INBOX').readlines()
 
 
 def download_patches_by_using_git_pw(ser_id):
