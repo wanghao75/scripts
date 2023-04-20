@@ -46,7 +46,7 @@ def make_fork_same_with_origin(branch_name):
         if "error:" in m or "fatal:" in m:
             logging.error("fetch upstream error %s" % m)
             print("merge upstream error %s" % m)
-    os.popen("git push").readlines()
+    os.popen("git push origin HEAD:{}".format(branch_name)).readlines()
 
 
 def get_mail_step():
