@@ -454,6 +454,7 @@ def main():
             branch = tag
 
         # in production environment， deploy on one branch
+        print("branch is ", branch)
         if branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
             logging.info("branch doesn't match, ignore it")
             print("branch doesn't match, ignore it")
