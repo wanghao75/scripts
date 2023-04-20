@@ -55,8 +55,6 @@ def get_mail_step():
     # make sure we can receive all patches-email, so we wait for five minutes
     time.sleep(300)
     os.popen('getmail --getmaildir="/home/patches/" --idle INBOX').readlines()
-    time.sleep(5)
-    os.popen('getmail --getmaildir="/home/patches/" --idle INBOX').readlines()
 
 
 def download_patches_by_using_git_pw(ser_id):
@@ -168,17 +166,31 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
 
     if am_success:
         retry_flag = False
-        push_res = os.popen("git push origin %s" % new_branch).readlines()
-        for p in push_res:
-            if "error:" in p or "fatal:" in p:
-                time.sleep(20)
-                logging.error("git push failed, %s, try again" % p)
-                print("git push failed, %s, try again" % p)
-                os.popen("git push origin %s" % new_branch).readlines()
-                retry_flag = True
-
-        if retry_flag:
-            os.popen("git push origin %s" % new_branch).readlines()
+        retry_times = 0
+        while True:
+            if retry_times < 5:
+                push_res = os.popen("git push origin %s" % new_branch).readlines()
+                for p in push_res:
+                    if "error:" in p or "fatal:" in p:
+                        retry_flag = True
+                if not retry_flag:
+                    break
+                else:
+                    retry_times += 1
+            else:
+                break
+                
+        # push_res = os.popen("git push origin %s" % new_branch).readlines()
+        # for p in push_res:
+        #     if "error:" in p or "fatal:" in p:
+        #         time.sleep(20)
+        #         logging.error("git push failed, %s, try again" % p)
+        #         print("git push failed, %s, try again" % p)
+        #         os.popen("git push origin %s" % new_branch).readlines()
+        #         retry_flag = True
+        # 
+        # if retry_flag:
+        #     os.popen("git push origin %s" % new_branch).readlines()
         un_config_git()
         return new_branch
     else:
@@ -208,7 +220,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
     try_times = 0
     while True:
         if res.status_code != 201:
-            if try_times >= 2:
+            if try_times >= 3:
                 print("new a pull request failed, ", res.status_code, res.json())
                 break
             res = requests.post(url="https://gitee.com/api/v5/repos/new-op/kernel/pulls", data=data)
@@ -219,7 +231,8 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
     if res.status_code == 201:
         pull_link = res.json().get("html_url")
         send_mail_to_notice_developers(
-            "your patch has been converted to a pull request, pull request link is: \n%s" % pull_link, receiver_email, cc_email, sub)
+            "your patch has been converted to a pull request, pull request link is: \n%s" % pull_link, receiver_email,
+            cc_email, sub)
 
         # add /check-cla comment to pr
         comment_data = {
@@ -439,7 +452,7 @@ def main():
                     branch = tag.split(",")[0]
         else:
             branch = tag
-        
+
         # in production environment， deploy on one branch
         if branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
             logging.info("branch doesn't match, ignore it")
@@ -451,7 +464,8 @@ def main():
         download_patches_by_using_git_pw(series_id)
 
         # get sender email and cover-letter-body
-        sender_email, letter_body, sync_pr, title_pr, comm, cc, subject_str = get_email_content_sender_and_covert_to_pr_body(series_id)
+        sender_email, letter_body, sync_pr, title_pr, comm, cc, subject_str = get_email_content_sender_and_covert_to_pr_body(
+            series_id)
 
         if sender_email == "" and letter_body == "" and sync_pr == "" and title_pr == "":
             continue
