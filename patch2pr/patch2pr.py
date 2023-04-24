@@ -2,6 +2,14 @@ import logging
 import time
 import requests
 import os
+import email
+import imaplib
+import smtplib
+from email.utils import make_msgid
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from textwrap import dedent
+from subprocess import call
 
 BRANCHES_MAP = {
     "master": "master",
@@ -179,7 +187,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
                     retry_times += 1
             else:
                 break
-                
+
         # push_res = os.popen("git push origin %s" % new_branch).readlines()
         # for p in push_res:
         #     if "error:" in p or "fatal:" in p:
@@ -188,7 +196,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
         #         print("git push failed, %s, try again" % p)
         #         os.popen("git push origin %s" % new_branch).readlines()
         #         retry_flag = True
-        # 
+        #
         # if retry_flag:
         #     os.popen("git push origin %s" % new_branch).readlines()
         un_config_git()
@@ -200,7 +208,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id):
 
 # summit a pr
 def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_list, cover_letter, receiver_email,
-                             pr_title, commit, cc_email, sub):
+                             pr_title, commit, cc_email, sub, msg_id):
     title = pr_title
     if pr_url_in_email_list or cover_letter:
         body = "PR sync from: {}\n{} \n{}".format(commit, pr_url_in_email_list, cover_letter)
@@ -232,7 +240,7 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
         pull_link = res.json().get("html_url")
         send_mail_to_notice_developers(
             "your patch has been converted to a pull request, pull request link is: \n%s" % pull_link, receiver_email,
-            cc_email, sub)
+            cc_email, sub, msg_id)
 
         # add /check-cla comment to pr
         comment_data = {
@@ -244,39 +252,88 @@ def make_pr_to_summit_commit(source_branch, base_branch, token, pr_url_in_email_
             data=comment_data)
 
 
-# use email to notice that pr has been created
-def send_mail_to_notice_developers(content, email_address, cc_address, subject):
-    import smtplib
-    from email.mime.text import MIMEText
+# get unseen emails and reply it
+def send_mail_to_notice_developers(content, email_address, cc_address, subject, message_id):
+    useraccount = os.getenv("EMAIL_HOST_USER", "")
+    password = os.getenv("EMAIL_HOST_PASSWORD", "")
+    imap_server = 'imap.163.com'
+    im_server = imaplib.IMAP4_SSL(imap_server, 993)
+    im_server.login(useraccount, password)
 
-    mail_host = os.getenv("SEND_EMAIL_HOST", "")
-    mail_user = os.getenv("SEND_EMAIL_HOST_USER", "")
-    mail_pass = os.getenv("SEND_EMAIL_HOST_PASSWORD", "")
-    sender = mail_user
-    receivers = ",".join(email_address)
+    sm_server = smtplib.SMTP(os.getenv("SEND_EMAIL_HOST", "smtp.163.com"), os.getenv("SEND_EMAIL_PORT", 25))
+    sm_server.ehlo()
+    sm_server.starttls()
+    sm_server.login(useraccount, password)
 
-    title = "notice"
-    message = MIMEText(content, 'plain', 'utf-8')
-    message['From'] = "patchwork bot <{}>".format(sender)
-    message['To'] = receivers
-    if cc_address:
-        message['Cc'] = ",".join(cc_address)
-    if subject:
-        message['Subject'] = "Re: " + subject
-    else:
-        message['Subject'] = title
-    notice_list = email_address
-    notice_list.extend(cc_address)
-    try:
-        smtpObj = smtplib.SMTP(mail_host, os.getenv("SEND_EMAIL_PORT", 25))
-        smtpObj.ehlo()
-        smtpObj.starttls()
-        smtpObj.login(mail_user, mail_pass)
-        smtpObj.sendmail(sender, notice_list, message.as_string())
-        smtpObj.quit()
-    except smtplib.SMTPException as e:
-        import logging
-        logging.info("send mail failed, ", e)
+    imaplib.Commands['ID'] = ('AUTH')
+    args = ("name", "{}".format(os.getenv("EMAIL_HOST_USER", "")), "contact",
+            "{}".format(os.getenv("EMAIL_HOST_USER", "")), "version", "1.0.0", "vendor", "myclient")
+    im_server._simple_command('ID', '("' + '" "'.join(args) + '")')
+    im_server.select()
+    _, unseen = im_server.search(None, "UNSEEN")
+    unseen_list = unseen[0].split()
+
+    for number in unseen_list:
+        _, data = im_server.fetch(number, '(RFC822)')
+        original = email.message_from_bytes(data[0][1])
+        if original["From"] == email_address and original["Subject"] == subject and original['Message-ID'] == message_id:
+            sm_server.sendmail(useraccount, original["From"],
+                               create_auto_reply(useraccount, content, cc_address, original).as_bytes())
+            log = 'Replied to “%s” for the mail “%s”' % (original['From'],
+                                                         original['Subject'])
+            print(log)
+            try:
+                call(['notify-send', log])
+            except FileNotFoundError:
+                pass
+
+    sm_server.quit()
+    im_server.logout()
+
+
+# get origin content
+def create_auto_reply(from_address, body, cc_address, original):
+    mail = MIMEMultipart('alternative')
+    mail['Message-ID'] = make_msgid()
+    mail['References'] = mail['In-Reply-To'] = original['Message-ID']
+    mail['Subject'] = 'Re: ' + original['Subject']
+    mail['From'] = "patch-bot <{}>".format(from_address)
+    mail['To'] = original['Reply-To'] or original['From']
+    mail['Cc'] = ",".join(cc_address)
+    mail.attach(MIMEText(dedent(body), 'plain'))
+    return mail
+
+
+# # use email to notice that pr has been created
+# def send_mail_to_notice_developers(content, email_address, cc_address, subject):
+#     mail_host = os.getenv("SEND_EMAIL_HOST", "")
+#     mail_user = os.getenv("SEND_EMAIL_HOST_USER", "")
+#     mail_pass = os.getenv("SEND_EMAIL_HOST_PASSWORD", "")
+#     sender = mail_user
+#     receivers = ",".join(email_address)
+#
+#     title = "notice"
+#     message = MIMEText(content, 'plain', 'utf-8')
+#     message['From'] = "patchwork bot <{}>".format(sender)
+#     message['To'] = receivers
+#     if cc_address:
+#         message['Cc'] = ",".join(cc_address)
+#     if subject:
+#         message['Subject'] = "Re: " + subject
+#     else:
+#         message['Subject'] = title
+#     notice_list = email_address
+#     notice_list.extend(cc_address)
+#     try:
+#         smtpObj = smtplib.SMTP(mail_host, os.getenv("SEND_EMAIL_PORT", 25))
+#         smtpObj.ehlo()
+#         smtpObj.starttls()
+#         smtpObj.login(mail_user, mail_pass)
+#         smtpObj.sendmail(sender, notice_list, message.as_string())
+#         smtpObj.quit()
+#     except smtplib.SMTPException as e:
+#         import logging
+#         logging.info("send mail failed, ", e)
 
 
 def get_email_content_sender_and_covert_to_pr_body(ser_id):
@@ -307,6 +364,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     committer = ""
     sub = ""
     cc = []
+    msg_id =""
 
     if cover_letter_id is None or cover_letter_id == 0:
         cur.execute("SELECT name from patchwork_patch where series_id={}".format(ser_id))
@@ -339,19 +397,21 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                                       string.split("<")[0].split("From:")[1].split(" ")[2]
                 if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
+                if string.startswith("Message-ID: "):
+                    msg_id = string.split("Message-ID: ")[1]
         cc.append(who_is_email_list)
 
         if "1/" in first_path_mail_name:
             send_mail_to_notice_developers("You have sent a series of patches to the kernel mailing list, "
                                            "but a cover doesn't have been sent, so bot can not generate a pull request. "
                                            "Please check and apply a cover, then send all patches again",
-                                           [patch_sender_email], [], "")
-            return "", "", "", "", "", ""
+                                           [patch_sender_email], [], "", msg_id)
+            return "", "", "", "", "", "", ""
 
         # config git
         config_git(patch_sender_email, patch_send_name)
 
-        return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub
+        return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub, msg_id
 
     cur.execute("SELECT * from patchwork_cover where id={}".format(cover_letter_id))
     cover_rows = cur.fetchall()
@@ -370,6 +430,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
 
     cover_who_is_email_list = ""
     for ch in cover_headers.split("\n"):
+        if ch.startswith("Message-ID: "):
+            msg_id = ch.split("Message-ID: ")[1]
         if ch.startswith("To: "):
             if "<" in ch:
                 cover_who_is_email_list = ch.split("<")[1].split(">")[0]
@@ -398,7 +460,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     # config git
     config_git(patch_sender_email, patch_send_name)
 
-    return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub
+    return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub, msg_id
 
 
 def main():
@@ -465,7 +527,7 @@ def main():
         download_patches_by_using_git_pw(series_id)
 
         # get sender email and cover-letter-body
-        sender_email, letter_body, sync_pr, title_pr, comm, cc, subject_str = get_email_content_sender_and_covert_to_pr_body(
+        sender_email, letter_body, sync_pr, title_pr, comm, cc, subject_str, message_id = get_email_content_sender_and_covert_to_pr_body(
             series_id)
 
         if sender_email == "" and letter_body == "" and sync_pr == "" and title_pr == "":
@@ -483,7 +545,7 @@ def main():
 
         # make pr
         make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
-                                 sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str)
+                                 sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str, message_id)
 
 
 if __name__ == '__main__':
