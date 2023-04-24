@@ -398,8 +398,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                                       string.split("<")[0].split("From:")[1].split(" ")[2]
                 if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
-                if string.startswith("Message-ID: "):
-                    msg_id = string.split("Message-ID: ")[1]
+                if string.startswith("Message-Id: "):
+                    msg_id = string.split("Message-Id: ")[1]
         cc.append(who_is_email_list)
 
         if "1/" in first_path_mail_name:
@@ -431,8 +431,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
 
     cover_who_is_email_list = ""
     for ch in cover_headers.split("\n"):
-        if ch.startswith("Message-ID: "):
-            msg_id = ch.split("Message-ID: ")[1]
+        if ch.startswith("Message-Id: "):
+            msg_id = ch.split("Message-Id: ")[1]
         if ch.startswith("To: "):
             if "<" in ch:
                 cover_who_is_email_list = ch.split("<")[1].split(">")[0]
