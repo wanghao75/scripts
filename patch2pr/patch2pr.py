@@ -270,7 +270,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             "{}".format(os.getenv("EMAIL_HOST_USER", "")), "version", "1.0.0", "vendor", "myclient")
     im_server._simple_command('ID', '("' + '" "'.join(args) + '")')
     im_server.select()
-    _, unseen = im_server.search(None, "(UNSEEN UNANSWERED)")
+    _, unseen = im_server.search(None, "UNANSWERED")
     unseen_list = unseen[0].split()
 
     for number in unseen_list:
@@ -288,9 +288,11 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
                 call(['notify-send', log])
             except FileNotFoundError:
                 pass
+            im_server.store(number, '+FLAGS', '\\Answered')
 
     sm_server.quit()
     sm_server.close()
+    im_server.close()
     im_server.logout()
 
 
