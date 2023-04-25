@@ -278,7 +278,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
         original = email.message_from_bytes(data[0][1])
         print("email infor ==== ", email_address, subject, message_id)
         print("origin email infor ==== ", original["From"], original["Subject"], original['Message-ID'])
-        if original["From"] == email_address and original["Subject"] == subject and original['Message-ID'] == message_id:
+        if original["From"].split("<")[1].split(">")[0] == email_address[0] and original["Subject"] == subject and original['Message-ID'] == message_id:
             sm_server.sendmail(useraccount, original["From"],
                                create_auto_reply(useraccount, content, cc_address, original).as_bytes())
             log = 'Replied to “%s” for the mail “%s”' % (original['From'],
@@ -366,7 +366,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     committer = ""
     sub = ""
     cc = []
-    msg_id =""
+    msg_id = ""
 
     if cover_letter_id is None or cover_letter_id == 0:
         cur.execute("SELECT name from patchwork_patch where series_id={}".format(ser_id))
@@ -401,6 +401,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
                 if string.startswith("Message-Id: "):
                     msg_id = string.split("Message-Id: ")[1]
+                if string.startswith("Message-ID: "):
+                    msg_id = string.split("Message-ID: ")[1]
         cc.append(who_is_email_list)
 
         if "1/" in first_path_mail_name:
@@ -434,6 +436,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     for ch in cover_headers.split("\n"):
         if ch.startswith("Message-Id: "):
             msg_id = ch.split("Message-Id: ")[1]
+        if ch.startswith("Message-ID: "):
+            msg_id = ch.split("Message-ID: ")[1]
         if ch.startswith("To: "):
             if "<" in ch:
                 cover_who_is_email_list = ch.split("<")[1].split(">")[0]
