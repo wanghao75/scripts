@@ -282,6 +282,8 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             from_email = original["From"].split("<")[1].split(">")[0]
         else:
             from_email = from_email.strip(" ")
+        print("*******************************   ", email_address[0], message_id, 
+              from_email == email_address[0], original['Message-ID'] == message_id, "    ***************************")
         if from_email == email_address[0] and original['Message-ID'] == message_id:
             print("email infor ==== ", email_address, subject, message_id)
             print("origin email infor ==== ", original["From"], original["Subject"], original['Message-ID'])
@@ -313,38 +315,6 @@ def create_auto_reply(from_address, body, cc_address, original):
     mail['Cc'] = ",".join(cc_address)
     mail.attach(MIMEText(dedent(body), 'plain'))
     return mail
-
-
-# # use email to notice that pr has been created
-# def send_mail_to_notice_developers(content, email_address, cc_address, subject):
-#     mail_host = os.getenv("SEND_EMAIL_HOST", "")
-#     mail_user = os.getenv("SEND_EMAIL_HOST_USER", "")
-#     mail_pass = os.getenv("SEND_EMAIL_HOST_PASSWORD", "")
-#     sender = mail_user
-#     receivers = ",".join(email_address)
-#
-#     title = "notice"
-#     message = MIMEText(content, 'plain', 'utf-8')
-#     message['From'] = "patchwork bot <{}>".format(sender)
-#     message['To'] = receivers
-#     if cc_address:
-#         message['Cc'] = ",".join(cc_address)
-#     if subject:
-#         message['Subject'] = "Re: " + subject
-#     else:
-#         message['Subject'] = title
-#     notice_list = email_address
-#     notice_list.extend(cc_address)
-#     try:
-#         smtpObj = smtplib.SMTP(mail_host, os.getenv("SEND_EMAIL_PORT", 25))
-#         smtpObj.ehlo()
-#         smtpObj.starttls()
-#         smtpObj.login(mail_user, mail_pass)
-#         smtpObj.sendmail(sender, notice_list, message.as_string())
-#         smtpObj.quit()
-#     except smtplib.SMTPException as e:
-#         import logging
-#         logging.info("send mail failed, ", e)
 
 
 def get_email_content_sender_and_covert_to_pr_body(ser_id):
