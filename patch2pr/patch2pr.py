@@ -272,6 +272,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
     im_server.select()
     _, unseen = im_server.search(None, 'UNANSWERED')
     unseen_list = unseen[0].split()
+    print(len(unseen_list))
 
     for number in unseen_list:
         _, data = im_server.fetch(number, '(RFC822)')
