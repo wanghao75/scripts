@@ -270,7 +270,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             "{}".format(os.getenv("EMAIL_HOST_USER", "")), "version", "1.0.0", "vendor", "myclient")
     im_server._simple_command('ID', '("' + '" "'.join(args) + '")')
     im_server.select()
-    _, unseen = im_server.search(None, "UNSEEN")
+    _, unseen = im_server.search(None, "(UNSEEN UNANSWERED)")
     unseen_list = unseen[0].split()
 
     for number in unseen_list:
@@ -290,6 +290,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
                 pass
 
     sm_server.quit()
+    sm_server.close()
     im_server.logout()
 
 
