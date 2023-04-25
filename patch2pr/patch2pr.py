@@ -278,7 +278,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
         original = email.message_from_bytes(data[0][1])
         print("email infor ==== ", email_address, subject, message_id)
         print("origin email infor ==== ", original["From"], original["Subject"], original['Message-ID'])
-        if original["From"].split("<")[1].split(">")[0] == email_address[0] and original["Subject"] == subject and original['Message-ID'] == message_id:
+        if original["From"].split("<")[1].split(">")[0] == email_address[0] and original['Message-ID'] == message_id:
             sm_server.sendmail(useraccount, original["From"],
                                create_auto_reply(useraccount, content, cc_address, original).as_bytes())
             log = 'Replied to “%s” for the mail “%s”' % (original['From'],
