@@ -282,7 +282,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             from_email = original["From"].split("<")[1].split(">")[0]
         else:
             from_email = from_email.strip(" ")
-        print("*******************************   ", email_address[0], message_id, 
+        print("*******************************   ", email_address[0], message_id,
               from_email == email_address[0], original['Message-ID'] == message_id, "    ***************************")
         if from_email == email_address[0] and original['Message-ID'] == message_id:
             print("email infor ==== ", email_address, subject, message_id)
@@ -300,7 +300,6 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
 
     sm_server.quit()
     sm_server.close()
-    im_server.close()
     im_server.logout()
 
 
