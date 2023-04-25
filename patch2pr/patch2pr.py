@@ -272,13 +272,17 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
     im_server.select()
     _, unseen = im_server.search(None, 'UNANSWERED')
     unseen_list = unseen[0].split()
-    print(len(unseen_list))
 
     for number in unseen_list:
         _, data = im_server.fetch(number, '(RFC822)')
         original = email.message_from_bytes(data[0][1])
 
-        if original["From"].split("<")[1].split(">")[0] == email_address[0] and original['Message-ID'] == message_id:
+        from_email = original["From"]
+        if "<" in from_email and ">" in from_email:
+            from_email = original["From"].split("<")[1].split(">")[0]
+        else:
+            from_email = from_email.strip(" ")
+        if from_email == email_address[0] and original['Message-ID'] == message_id:
             print("email infor ==== ", email_address, subject, message_id)
             print("origin email infor ==== ", original["From"], original["Subject"], original['Message-ID'])
             sm_server.sendmail(useraccount, original["From"],
