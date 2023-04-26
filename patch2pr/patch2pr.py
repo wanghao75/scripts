@@ -1,3 +1,4 @@
+import base64
 import logging
 import time
 import requests
@@ -282,7 +283,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             from_email = original["From"].split("<")[1].split(">")[0]
         else:
             from_email = from_email.strip(" ")
-        
+
         # mark email as answered
         im_server.store(number, '+FLAGS', '\\Answered')
         if from_email == email_address[0] and original['Message-ID'] == message_id:
@@ -362,17 +363,26 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         patches_headers_rows = cur.fetchall()
         who_is_email_list = ""
         for row in patches_headers_rows:
-            for string in row[0].split("\n"):
+            data = row[0].split("\n")
+            for index, string in enumerate(data):
                 if string.startswith("To: "):
                     if "<" in string:
                         who_is_email_list = string.split("<")[1].split(">")[0]
                     else:
                         who_is_email_list = string.split(" ")[1]
                 if string.startswith("From: "):
-                    committer = string.split("From:")[1]
-                    patch_sender_email = string.split("<")[1].split(">")[0]
-                    patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
-                                      string.split("<")[0].split("From:")[1].split(" ")[2]
+                    if "<" not in string and ">" not in string:
+                        email_from = data[index + 1]
+                        email_from_name = base64.b64decode(string.split("From: ")[1].split("?b?")[1].split("?=")[0]) \
+                            .decode("gb18030")
+                        committer = email_from_name + " " + email_from
+                        patch_sender_email = email_from.split("<")[1].split(">")[0]
+                        patch_send_name = email_from_name
+                    else:
+                        committer = string.split("From:")[1]
+                        patch_sender_email = string.split("<")[1].split(">")[0]
+                        patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
+                                          string.split("<")[0].split("From:")[1].split(" ")[2]
                 if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
                     email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
                 if string.startswith("Message-Id: "):
@@ -409,7 +419,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
     title_for_pr = cover_name.split("]")[1]
 
     cover_who_is_email_list = ""
-    for ch in cover_headers.split("\n"):
+    cover_data = cover_headers.split("\n")
+    for idx, ch in enumerate(cover_data):
         if ch.startswith("Message-Id: "):
             msg_id = ch.split("Message-Id: ")[1]
         if ch.startswith("Message-ID: "):
@@ -422,10 +433,19 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id):
         if ch.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % cover_who_is_email_list):
             email_list_link_of_patch = ch.replace("<", "").replace(">", "").replace("message", "thread")
         if ch.startswith("From: "):
-            committer = ch.split("From:")[1]
-            patch_sender_email = ch.split("From: ")[1].split("<")[1].split(">")[0]
-            patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
-                              ch.split("<")[0].split("From:")[1].split(" ")[2]
+
+            if "<" not in ch and ">" not in ch:
+                email_from = cover_data[idx + 1]
+                email_from_name = base64.b64decode(ch.split("From: ")[1].split("?b?")[1].split("?=")[0]) \
+                    .decode("gb18030")
+                committer = email_from_name + " " + email_from
+                patch_sender_email = email_from.split("<")[1].split(">")[0]
+                patch_send_name = email_from_name
+            else:
+                committer = ch.split("From:")[1]
+                patch_sender_email = ch.split("<")[1].split(">")[0]
+                patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
+                                  ch.split("<")[0].split("From:")[1].split(" ")[2]
     cc.append(cover_who_is_email_list)
 
     for ct in cover_content.split("\n"):
@@ -527,7 +547,8 @@ def main():
 
         # make pr
         make_pr_to_summit_commit(source_branch, target_branch, not_cibot_gitee_token,
-                                 sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str, message_id)
+                                 sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str,
+                                 message_id)
 
 
 if __name__ == '__main__':
