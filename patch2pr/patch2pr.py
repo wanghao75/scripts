@@ -285,7 +285,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             from_email = from_email.strip(" ")
 
         # mark email as answered
-        im_server.store(number, '+FLAGS', '\\Answered')
+        # im_server.store(number, '+FLAGS', '\\Answered')
         if from_email == email_address[0] and original['Message-ID'] == message_id:
             sm_server.sendmail(useraccount, original["From"],
                                create_auto_reply(useraccount, content, cc_address, original).as_bytes())
@@ -296,6 +296,8 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
                 call(['notify-send', log])
             except FileNotFoundError:
                 pass
+            # mark email as answered
+            im_server.store(number, '+FLAGS', '\\Answered')
 
     sm_server.quit()
     sm_server.close()
