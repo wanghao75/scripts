@@ -572,7 +572,8 @@ def main():
 
         project_name = i.split(":")[1]
         if i.split(":")[1].__contains__("src"):
-            tag_name = i.split(":")[1].replace("%s-" % repo.replace("/", "-"), "")
+            rep = repo.replace("/", "-")
+            tag_name = i.split(":")[1].replace("%s-" % rep, "")
         else:
             tag_name = i.split(":")[1]
         series_id = i.split(":")[2]
