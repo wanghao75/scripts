@@ -341,7 +341,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
         else:
             from_email = from_email.strip(" ")
         if from_email == email_address[0] and original['Message-ID'] == message_id:
-            sm_server.sendmail(useraccount, original["From"],
+            sm_server.sendmail(useraccount, cc_address.append(original["From"].split("<")[1].split(">")[0]),
                                create_auto_reply(useraccount, content, cc_address, original).as_bytes())
             log = 'Replied to “%s” for the mail “%s”' % (original['From'],
                                                          original['Subject'])
@@ -354,7 +354,6 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
 
     sm_server.quit()
     sm_server.close()
-    im_server.close()
     im_server.logout()
 
 
