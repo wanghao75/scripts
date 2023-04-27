@@ -570,10 +570,11 @@ def main():
             if v.get("host") == list_id:
                 repo = k.split("/")[-2] + "/" + k.split("/")[-1]
 
+        project_name = i.split(":")[1]
         if i.split(":")[1].__contains__("src"):
-            project_name = i.split(":")[1].replace("%s-" % repo.replace("/", "-"), "")
+            tag_name = i.split(":")[1].replace("%s-" % repo.replace("/", "-"), "")
         else:
-            project_name = i.split(":")[1]
+            tag_name = i.split(":")[1]
         series_id = i.split(":")[2]
 
         tag = i.split(":")[3].split("[")[1].split("]")[0]
@@ -581,12 +582,12 @@ def main():
         branch = ""
         if tag.__contains__(","):
             if tag.count(",") == 1:
-                if tag.split(",")[-1] == project_name:
+                if tag.split(",")[-1] == tag_name:
                     branch = tag.split(",")[-1]
                 else:
                     branch = tag.split(",")[0]
             elif tag.count(",") >= 2:
-                if tag.split(",")[-1] == project_name:
+                if tag.split(",")[-1] == tag_name:
                     branch = tag.split(",")[-1]
                 else:
                     branch = tag.split(",")[0]
