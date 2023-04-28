@@ -288,7 +288,7 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
         # im_server.store(number, '+FLAGS', '\\Answered')
         print("email send to ", from_email, cc_address, email_address)
         if from_email == email_address[0] and original['Message-ID'] == message_id:
-            sm_server.sendmail(useraccount, email_address.extend(cc_address),
+            sm_server.sendmail(useraccount, email_address + cc_address,
                                create_auto_reply(useraccount, email_address, content, cc_address, original).as_bytes())
             log = 'Replied to “%s” for the mail “%s”' % (original['From'],
                                                          original['Subject'])
