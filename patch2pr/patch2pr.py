@@ -280,15 +280,16 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
 
         from_email = original["From"]
         if "<" in from_email and ">" in from_email:
-            from_email = original["From"].split("<")[1].split(">")[0]
+            from_email = from_email.split("<")[1].split(">")[0]
         else:
             from_email = from_email.strip(" ")
 
         # mark email as answered
         # im_server.store(number, '+FLAGS', '\\Answered')
+        print("email send to ", from_email, cc_address, email_address)
         if from_email == email_address[0] and original['Message-ID'] == message_id:
-            sm_server.sendmail(useraccount, original["From"],
-                               create_auto_reply(useraccount, content, cc_address, original).as_bytes())
+            sm_server.sendmail(useraccount, email_address.extend(cc_address),
+                               create_auto_reply(useraccount, email_address, content, cc_address, original).as_bytes())
             log = 'Replied to “%s” for the mail “%s”' % (original['From'],
                                                          original['Subject'])
             print(log)
@@ -296,7 +297,6 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
                 call(['notify-send', log])
             except FileNotFoundError:
                 pass
-            # mark email as answered
             im_server.store(number, '+FLAGS', '\\Answered')
 
     sm_server.quit()
@@ -305,13 +305,13 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
 
 
 # get origin content
-def create_auto_reply(from_address, body, cc_address, original):
+def create_auto_reply(from_address, to_address, body, cc_address, original):
     mail = MIMEMultipart('alternative')
     mail['Message-ID'] = make_msgid()
     mail['References'] = mail['In-Reply-To'] = original['Message-ID']
     mail['Subject'] = 'Re: ' + original['Subject']
-    mail['From'] = "patch-bot <{}>".format(from_address)
-    mail['To'] = original['Reply-To'] or original['From']
+    mail['From'] = "patchwork bot <{}>".format(from_address)
+    mail['To'] = ",".join(to_address)
     mail['Cc'] = ",".join(cc_address)
     mail.attach(MIMEText(dedent(body), 'plain'))
     return mail
