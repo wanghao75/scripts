@@ -62,7 +62,7 @@ def get_mail_step():
     if os.path.exists("/home/patches/project_series.txt"):
         os.remove("/home/patches/project_series.txt")
     # make sure we can receive all patches-email, so we wait for five minutes
-    #time.sleep(300)
+    time.sleep(300)
     os.popen('getmail --getmaildir="/home/patches/" --idle INBOX').readlines()
 
 
