@@ -89,7 +89,8 @@ def get_project_and_series_information():
         return []
     with open("/home/patches/project_series.txt", "r", encoding="utf-8") as f:
         infor = f.readlines()
-
+    
+    print("infor is ", infor)
     return infor
 
 
