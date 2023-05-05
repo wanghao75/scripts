@@ -108,6 +108,7 @@ def get_mail_step():
     for k, v in RCFile_MAP.items():
         os.popen("export GET_EMAIL=%s" % os.getenv(v.get("host"))).readlines()
         os.popen('getmail --getmaildir="{}" --idle INBOX'.format(k)).readlines()
+        time.sleep(10)
 
 
 def download_patches_by_using_git_pw(ser_id):
