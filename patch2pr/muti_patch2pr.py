@@ -569,7 +569,7 @@ def main():
         list_id = i.split(":")[0]
         repo = ""
         for k, v in RCFile_MAP.items():
-            if v.get("host") == list_id:
+            if os.getenv(v.get("host")) == list_id:
                 repo = k.split("/")[-2] + "/" + k.split("/")[-1]
 
         project_name = i.split(":")[1]
