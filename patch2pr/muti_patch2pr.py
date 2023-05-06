@@ -10,7 +10,6 @@ from email.utils import make_msgid
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from textwrap import dedent
-from subprocess import call
 
 BRANCHES_MAP = {
     "src-openeuler/kernel": {
@@ -349,10 +348,6 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             log = 'Replied to “%s” for the mail “%s”' % (original['From'],
                                                          original['Subject'])
             print(log)
-            try:
-                call(['notify-send', log])
-            except FileNotFoundError:
-                pass
             im_server.store(number, '+FLAGS', '\\Answered')
 
     sm_server.quit()
