@@ -539,6 +539,7 @@ def change_email_status_to_answered(host_pass_dict):
 
     for number in unseen_list:
         im_server.store(number, '+FLAGS', '\\Answered')
+    im_server.logout()
 
 
 def main():
