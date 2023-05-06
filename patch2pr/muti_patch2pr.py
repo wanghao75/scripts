@@ -543,7 +543,7 @@ def change_email_status_to_answered(host_pass_dict):
 def main():
     server = os.getenv("PATCHWORK_SERVER", "")
     server_token = os.getenv("PATCHWORK_TOKEN", "")
-    repo_user = os.getenv("REPO_OWNER", "")
+    repo_user = os.getenv("CI_BOT_NAME", "")
     not_cibot_gitee_token = os.getenv("GITEE_TOKEN_NOT_CI_BOT", "")
     mail_server = os.getenv("EMAIL_HOST", "")
 
