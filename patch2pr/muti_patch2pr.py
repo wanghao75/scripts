@@ -619,7 +619,7 @@ def main():
         cc_list = cc
 
         # use patches
-        target_branch = BRANCHES_MAP.get(branch)
+        target_branch = BRANCHES_MAP.get(repo).get(branch)
         if target_branch is None:
             logging.info("branch is ", branch, "can not match any branches")
             print("branch is ", branch, "can not match any branches")
