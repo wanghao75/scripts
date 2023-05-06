@@ -342,9 +342,10 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             from_email = original["From"].split("<")[1].split(">")[0]
         else:
             from_email = from_email.strip(" ")
+        print("email send to ", from_email, cc_address)
         if from_email == email_address[0] and original['Message-ID'] == message_id:
-            sm_server.sendmail(useraccount, cc_address.append(original["From"].split("<")[1].split(">")[0]),
-                               create_auto_reply(useraccount, content, cc_address, original).as_bytes())
+            sm_server.sendmail(useraccount, email_address + cc_address,
+                               create_auto_reply(useraccount, email_address, content, cc_address, original).as_bytes())
             log = 'Replied to “%s” for the mail “%s”' % (original['From'],
                                                          original['Subject'])
             print(log)
@@ -360,13 +361,13 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
 
 
 # get origin content
-def create_auto_reply(from_address, body, cc_address, original):
+def create_auto_reply(from_address, to_address, body, cc_address, original):
     mail = MIMEMultipart('alternative')
     mail['Message-ID'] = make_msgid()
     mail['References'] = mail['In-Reply-To'] = original['Message-ID']
     mail['Subject'] = 'Re: ' + original['Subject']
-    mail['From'] = "patch-bot <{}>".format(from_address)
-    mail['To'] = original['Reply-To'] or original['From']
+    mail['From'] = "patchwork bot <{}>".format(from_address)
+    mail['To'] = ",".join(to_address)
     mail['Cc'] = ",".join(cc_address)
     mail.attach(MIMEText(dedent(body), 'plain'))
     return mail
@@ -471,7 +472,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         cover_content = row[4]
 
     if cover_content == "" or cover_headers == "" or cover_name == "":
-        return "", "", "", ""
+        return "", "", "", "", "", "", ""
     sub = cover_name
     title_for_pr = cover_name.split("]")[1]
 
@@ -573,10 +574,10 @@ def main():
                 repo = k.split("/")[-2] + "/" + k.split("/")[-1]
 
         project_name = i.split(":")[1]
-        
+
         rep = repo.replace("/", "-")
         tag_name = i.split(":")[1].replace("%s-" % rep, "")
-        
+
         series_id = i.split(":")[2]
 
         tag = i.split(":")[3].split("[")[1].split("]")[0]
@@ -613,6 +614,7 @@ def main():
             series_id, repo)
 
         if sender_email == "" and letter_body == "" and sync_pr == "" and title_pr == "":
+            print("can not get useful information for ", project_name, ", series id is ", series_id, ", repo is ", repo)
             continue
 
         emails_to_notify = [sender_email]
