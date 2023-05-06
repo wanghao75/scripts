@@ -54,8 +54,8 @@ BRANCHES_MAP = {
 
 # map of getmailrc file path, host and pass
 RCFile_MAP = {
-    "/home/patches/rc/src-openeuler/kernel": {"host": "SRC-OPENEULER-KERNEL-HOST", "pass": "SRC-OPENEULER-KERNEL-PASS"},
-    "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER-KERNEL-HOST", "pass": "OPENEULER-KERNEL-PASS"}
+    "/home/patches/rc/src-openeuler/kernel": {"host": "SRC_OPENEULER_KERNEL_HOST", "pass": "SRC_OPENEULER_KERNEL_PASS"},
+    "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
 }
 
 
