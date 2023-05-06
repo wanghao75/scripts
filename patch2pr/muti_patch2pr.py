@@ -573,11 +573,10 @@ def main():
                 repo = k.split("/")[-2] + "/" + k.split("/")[-1]
 
         project_name = i.split(":")[1]
-        if i.split(":")[1].__contains__("src"):
-            rep = repo.replace("/", "-")
-            tag_name = i.split(":")[1].replace("%s-" % rep, "")
-        else:
-            tag_name = i.split(":")[1]
+        
+        rep = repo.replace("/", "-")
+        tag_name = i.split(":")[1].replace("%s-" % rep, "")
+        
         series_id = i.split(":")[2]
 
         tag = i.split(":")[3].split("[")[1].split("]")[0]
