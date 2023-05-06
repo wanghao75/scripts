@@ -106,7 +106,8 @@ def get_mail_step():
     time.sleep(300)
     # 兼容多仓库
     for k, v in RCFile_MAP.items():
-        os.popen("export GET_EMAIL=%s" % os.getenv(v.get("host"))).readlines()
+        os.environ["GET_EMAIL"] = os.getenv(v.get("host"))
+        # os.popen("export GET_EMAIL=%s" % os.getenv(v.get("host"))).readlines()
         os.popen('getmail --getmaildir="{}" --idle INBOX'.format(k)).readlines()
         time.sleep(10)
 
