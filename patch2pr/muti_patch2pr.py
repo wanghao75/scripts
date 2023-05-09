@@ -273,7 +273,6 @@ def make_pr_to_summit_commit(org, repo_name, source_branch, base_branch, token, 
     while True:
         if res.status_code != 201:
             if try_times >= 2:
-                logging.error("new a pull request failed, {}, {} , retry".format(res.status_code, res.json()))
                 break
             res = requests.post(url=create_pr_url, data=data)
             try_times += 1
