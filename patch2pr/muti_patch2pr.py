@@ -102,7 +102,7 @@ def get_mail_step():
         os.remove("/home/patches/project_series.txt")
 
     # before run getmail, sleep 5 minutes
-    time.sleep(300)
+    # time.sleep(300)
     # 兼容多仓库
     for k, v in RCFile_MAP.items():
         os.environ["GET_EMAIL"] = os.getenv(v.get("host"))
