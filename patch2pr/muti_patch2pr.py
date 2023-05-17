@@ -627,8 +627,8 @@ def main():
         make_pr_to_summit_commit(organization, rp, source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str, message_id)
 
-    for v in RCFile_MAP.values():
-        change_email_status_to_answered(v)
+    # for v in RCFile_MAP.values():
+    #    change_email_status_to_answered(v)
 
 
 if __name__ == '__main__':
