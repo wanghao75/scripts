@@ -457,10 +457,14 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                                            "but a cover doesn't have been sent, so bot can not generate a pull request. "
                                            "Please check and apply a cover, then send all patches again",
                                            [patch_sender_email], [], sub, msg_id, path_of_repo)
-            return "", "", "", "", "", "", ""
+            cur.close()
+            conn.close()
+            return "", "", "", "", "", "", "", ""
 
         # config git
         config_git(patch_sender_email, patch_send_name)
+        cur.close()
+        conn.close()
 
         return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub, msg_id
 
@@ -475,7 +479,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         cover_content = row[4]
 
     if cover_content == "" or cover_headers == "" or cover_name == "":
-        return "", "", "", "", "", "", ""
+        cur.close()
+        conn.close()
+        return "", "", "", "", "", "", "", ""
     sub = cover_name
     title_for_pr = cover_name.split("]")[1]
 
@@ -555,12 +561,12 @@ def check_patches_number_same_with_subject(ser_id, tag_str):
     else:
         patch_number_subject = int(tag_str.split(",")[-1].split("/")[1])
 
+    cur.close()
+    conn.close()
     print("number in db: ", patch_number_db, " number in sub: ", patch_number_subject)
     if patch_number_db != patch_number_subject:
         return False
 
-    cur.close()
-    conn.close()
     return True
 
 
