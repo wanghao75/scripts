@@ -521,7 +521,7 @@ def check_patches_number_same_with_subject(ser_id, tag_str):
     cur = conn.cursor()
     cur.execute("SELECT count(*) from patchwork_patch where series_id={}".format(ser_id))
     in_db = cur.fetchall()
-    patch_number_db = in_db[0]
+    patch_number_db = in_db[0][0]
 
     number_re = re.compile(r'\d+/\d+')
     if tag_str.count(",") < 2:
