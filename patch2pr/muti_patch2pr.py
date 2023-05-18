@@ -75,13 +75,14 @@ def make_fork_same_with_origin(branch_name, o, r):
         else:
             remote_flag = True
 
+    same_flag = True
     if remote_flag:
         if o == "src-openeuler":
             os.popen("git remote add upstream https://gitee.com/new-op-src/{}.git".format(r))
         elif o == "openeuler":
             os.popen("git remote add upstream https://gitee.com/new-op/{}.git".format(r))
 
-    if branch_name == "openEuler-1.0-LTS" or branch_name == "master":
+    if branch_name in ["openEuler-1.0-LTS", "master"]:
         os.popen("git checkout -f {}".format(branch_name)).readlines()
     else:
         os.popen("git checkout -f origin/{}".format(branch_name)).readlines()
@@ -89,11 +90,20 @@ def make_fork_same_with_origin(branch_name, o, r):
     for p in fetch_res:
         if "error:" in p or "fatal:" in p:
             print("fetch upstream error %s" % p)
+            same_flag = False
     merge = os.popen("git merge upstream/{}".format(branch_name)).readlines()
     for m in merge:
         if "error:" in m or "fatal:" in m:
             print("merge upstream error %s" % m)
-    os.popen("git push origin HEAD:{}".format(branch_name)).readlines()
+            same_flag = False
+
+    push_res = os.popen("git push origin HEAD:{}".format(branch_name)).readlines()
+    for s in push_res:
+        if "error:" in s or "fatal:" in s:
+            print("push error %s" % s)
+            same_flag = False
+
+    return same_flag
 
 
 def get_mail_step():
@@ -188,7 +198,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
                     os.popen(
                         "git clone https://{}:{}@gitee.com/src-wq/{}.git".format(user, token, repo_name)).readlines()
             os.chdir("/home/patches/{}".format(repository_path))
-            make_fork_same_with_origin(origin_branch, org, repo_name)
+            same = make_fork_same_with_origin(origin_branch, org, repo_name)
         else:
             r = os.popen("git clone https://{}:{}@gitee.com/patch-bot/{}.git".format(user, token, repo_name)).readlines()
             for res in r:
@@ -196,10 +206,13 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
                     os.popen(
                         "git clone https://{}:{}@gitee.com/patch-bot/{}.git".format(user, token, repo_name)).readlines()
             os.chdir("/home/patches/{}".format(repository_path))
-            make_fork_same_with_origin(origin_branch, org, repo_name)
+            same = make_fork_same_with_origin(origin_branch, org, repo_name)
     else:
         os.chdir("/home/patches/{}".format(repository_path))
-        make_fork_same_with_origin(origin_branch, org, repo_name)
+        same = make_fork_same_with_origin(origin_branch, org, repo_name)
+
+    if not same:
+        return "", "", ""
 
     new_branch = "patch-%s" % int(time.time())
     os.popen("git checkout -b %s origin/%s" % (new_branch, origin_branch)).readlines()
@@ -221,7 +234,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
         push_res = os.popen("git push origin %s" % new_branch).readlines()
         for p in push_res:
             if "error:" in p or "fatal:" in p:
-                time.sleep(20)
+                time.sleep(8)
                 print("git push failed, %s, try again" % p)
                 os.popen("git push origin %s" % new_branch).readlines()
                 retry_flag = True
@@ -267,6 +280,7 @@ def make_pr_to_summit_commit(org, repo_name, source_branch, base_branch, token, 
     while True:
         if res.status_code != 201:
             if try_times >= 2:
+                print(res.status_code)
                 break
             res = requests.post(url=create_pr_url, data=data)
             try_times += 1
@@ -297,6 +311,10 @@ def make_pr_to_summit_commit(org, repo_name, source_branch, base_branch, token, 
 
         if rsp.status_code != 201:
             requests.post(url=comment_url, data=comment_data)
+
+        return True
+    else:
+        return False
 
 
 # use email to notice that pr has been created
@@ -507,6 +525,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     # config git
     config_git(patch_sender_email, patch_send_name)
 
+    cur.close()
+    conn.close()
+
     return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub, msg_id
 
 
@@ -539,6 +560,9 @@ def check_patches_number_same_with_subject(ser_id, tag_str):
     print("number in db: ", patch_number_db, " number in sub: ", patch_number_subject)
     if patch_number_db != patch_number_subject:
         return False
+
+    cur.close()
+    conn.close()
     return True
 
 
@@ -615,6 +639,7 @@ def main():
         if not same_in_db:
             infor_data.append(i)
             information.remove(i)
+            print("getmail did not pull all emails from %s, so skip", i)
             continue
 
         branch = ""
@@ -661,16 +686,26 @@ def main():
             continue
         source_branch, organization, rp = make_branch_and_apply_patch(repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
 
+        if source_branch == "" or organization == "" or rp == "":
+            information.remove(i)
+            infor_data.append(i)
+            continue
+
         # make pr
-        make_pr_to_summit_commit(organization, rp, source_branch, target_branch, not_cibot_gitee_token,
+        pr_success = make_pr_to_summit_commit(organization, rp, source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str, message_id)
+
+        if not pr_success:
+            information.remove(i)
+            infor_data.append(i)
+            continue
 
     if len(infor_data) != 0:
         rewrite_to_project_series_file(infor_data)
     else:
         os.remove("/home/patches/project_series.txt")
-        for v in RCFile_MAP.values():
-            change_email_status_to_answered(v)
+        # for v in RCFile_MAP.values():
+        #     change_email_status_to_answered(v)
 
 
 if __name__ == '__main__':
