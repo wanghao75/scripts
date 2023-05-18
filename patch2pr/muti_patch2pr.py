@@ -1,11 +1,12 @@
 import base64
-import logging
+import re
 import time
 import requests
 import os
 import email
 import imaplib
 import smtplib
+import psycopg2
 from email.utils import make_msgid
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -87,20 +88,15 @@ def make_fork_same_with_origin(branch_name, o, r):
     fetch_res = os.popen("git fetch upstream {}".format(branch_name)).readlines()
     for p in fetch_res:
         if "error:" in p or "fatal:" in p:
-            logging.error("fetch upstream error %s" % p)
             print("fetch upstream error %s" % p)
     merge = os.popen("git merge upstream/{}".format(branch_name)).readlines()
     for m in merge:
         if "error:" in m or "fatal:" in m:
-            logging.error("fetch upstream error %s" % m)
             print("merge upstream error %s" % m)
     os.popen("git push origin HEAD:{}".format(branch_name)).readlines()
 
 
 def get_mail_step():
-    if os.path.exists("/home/patches/project_series.txt"):
-        os.remove("/home/patches/project_series.txt")
-
     # before run getmail, sleep 5 minutes
     # time.sleep(300)
     # 兼容多仓库
@@ -215,7 +211,6 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
     for am_r in am_res:
         if am_r.__contains__("Patch failed at"):
             am_success = False
-            logging.error("failed to apply patch, reason is %s" % am_r)
             print("failed to apply patch, reason is %s" % am_r)
             break
         else:
@@ -227,7 +222,6 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
         for p in push_res:
             if "error:" in p or "fatal:" in p:
                 time.sleep(20)
-                logging.error("git push failed, %s, try again" % p)
                 print("git push failed, %s, try again" % p)
                 os.popen("git push origin %s" % new_branch).readlines()
                 retry_flag = True
@@ -368,7 +362,6 @@ def create_auto_reply(from_address, to_address, body, cc_address, original):
 
 
 def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
-    import psycopg2
     user = os.getenv("DATABASE_USER")
     name = os.getenv("DATABASE_NAME")
     password = os.getenv("DATABASE_PASSWORD")
@@ -517,6 +510,38 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub, msg_id
 
 
+def check_patches_number_same_with_subject(ser_id, tag_str):
+    user = os.getenv("DATABASE_USER")
+    name = os.getenv("DATABASE_NAME")
+    password = os.getenv("DATABASE_PASSWORD")
+    host = os.getenv("DATABASE_HOST")
+
+    conn = psycopg2.connect(database=name, user=user, password=password, host=host, port="5432")
+
+    cur = conn.cursor()
+    cur.execute("SELECT count(*) from patchwork_patch where series_id={}".format(ser_id))
+    in_db = cur.fetchall()
+    patch_number_db = in_db[0]
+
+    number_re = re.compile(r'\d+/\d+')
+    if tag_str.count(",") < 2:
+        if tag_str.count(",") == 0:
+            patch_number_subject = 1
+        else:
+            n = tag_str.split(",")[-1]
+            if number_re.match(n):
+                patch_number_subject = int(n.split("/")[1])
+            else:
+                patch_number_subject = 1
+    else:
+        patch_number_subject = int(tag_str.split(",")[-1].split("/")[1])
+
+    print("number in db: ", patch_number_db, " number in sub: ", patch_number_subject)
+    if patch_number_db != patch_number_subject:
+        return False
+    return True
+
+
 def change_email_status_to_answered(host_pass_dict):
     useraccount = os.getenv("%s" % host_pass_dict.get("host"), "")
     password = os.getenv("%s" % host_pass_dict.get("pass"), "")
@@ -536,6 +561,14 @@ def change_email_status_to_answered(host_pass_dict):
     im_server.logout()
 
 
+def rewrite_to_project_series_file(data_list):
+    if os.path.exists("/home/patches/project_series.txt"):
+        os.remove("/home/patches/project_series.txt")
+    with open("/home/patches/project_series.txt", "a", encoding="utf-8") as f:
+        for d in data_list:
+            f.writelines(d)
+
+
 def main():
     server = os.getenv("PATCHWORK_SERVER", "")
     server_token = os.getenv("PATCHWORK_TOKEN", "")
@@ -544,7 +577,7 @@ def main():
     mail_server = os.getenv("EMAIL_HOST", "")
 
     if server == "" or server_token == "" or repo_user == "" or not_cibot_gitee_token == "" or mail_server == "":
-        logging.error("args can not be empty")
+        print("args can not be empty")
         return
 
     # config get-mail tools
@@ -557,10 +590,10 @@ def main():
 
     information = get_project_and_series_information()
     if len(information) == 0:
-        logging.info("not a new series of patches which received by get-mail tool")
         print("not a new series of patches which received by get-mail tool has been write to file")
         return
 
+    infor_data = []
     for i in information:
         list_id = i.split(":")[0]
         repo = ""
@@ -576,6 +609,13 @@ def main():
         series_id = i.split(":")[2]
 
         tag = i.split(":")[3].split("[")[1].split("]")[0]
+
+        # check if we have the same number of patches in db, if not, skip
+        same_in_db = check_patches_number_same_with_subject(series_id, tag)
+        if not same_in_db:
+            infor_data.append(i)
+            information.remove(i)
+            continue
 
         branch = ""
         if tag.__contains__(","):
@@ -595,7 +635,6 @@ def main():
         # in production environment， deploy on one branch
         branch = branch.strip(" ")
         if branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
-            logging.info("branch doesn't match, ignore it")
             print("branch doesn't match, ignore it")
             return
 
@@ -618,7 +657,6 @@ def main():
         # use patches
         target_branch = BRANCHES_MAP.get(repo).get(branch)
         if target_branch is None:
-            logging.info("branch is ", branch, "can not match any branches")
             print("branch is ", branch, "can not match any branches")
             continue
         source_branch, organization, rp = make_branch_and_apply_patch(repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
@@ -627,8 +665,12 @@ def main():
         make_pr_to_summit_commit(organization, rp, source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str, message_id)
 
-    # for v in RCFile_MAP.values():
-    #    change_email_status_to_answered(v)
+    if len(infor_data) != 0:
+        rewrite_to_project_series_file(infor_data)
+    else:
+        os.remove("/home/patches/project_series.txt")
+        for v in RCFile_MAP.values():
+            change_email_status_to_answered(v)
 
 
 if __name__ == '__main__':
