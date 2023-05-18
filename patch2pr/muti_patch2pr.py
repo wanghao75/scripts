@@ -198,7 +198,6 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
                     os.popen(
                         "git clone https://{}:{}@gitee.com/src-wq/{}.git".format(user, token, repo_name)).readlines()
             os.chdir("/home/patches/{}".format(repository_path))
-            same = make_fork_same_with_origin(origin_branch, org, repo_name)
         else:
             r = os.popen("git clone https://{}:{}@gitee.com/patch-bot/{}.git".format(user, token, repo_name)).readlines()
             for res in r:
@@ -206,10 +205,10 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
                     os.popen(
                         "git clone https://{}:{}@gitee.com/patch-bot/{}.git".format(user, token, repo_name)).readlines()
             os.chdir("/home/patches/{}".format(repository_path))
-            same = make_fork_same_with_origin(origin_branch, org, repo_name)
     else:
         os.chdir("/home/patches/{}".format(repository_path))
-        same = make_fork_same_with_origin(origin_branch, org, repo_name)
+
+    same = make_fork_same_with_origin(origin_branch, org, repo_name)
 
     if not same:
         return "", "", ""
@@ -234,7 +233,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
         push_res = os.popen("git push origin %s" % new_branch).readlines()
         for p in push_res:
             if "error:" in p or "fatal:" in p:
-                time.sleep(8)
+                time.sleep(5)
                 print("git push failed, %s, try again" % p)
                 os.popen("git push origin %s" % new_branch).readlines()
                 retry_flag = True
@@ -352,7 +351,6 @@ def send_mail_to_notice_developers(content, email_address, cc_address, subject, 
             from_email = original["From"].split("<")[1].split(">")[0]
         else:
             from_email = from_email.strip(" ")
-        print("email send to ", from_email, cc_address)
         if from_email == email_address[0] and original['Message-ID'] == message_id:
             sm_server.sendmail(useraccount, email_address + cc_address,
                                create_auto_reply(useraccount, email_address, content, cc_address, original).as_bytes())
