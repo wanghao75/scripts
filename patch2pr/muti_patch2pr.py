@@ -58,6 +58,22 @@ RCFile_MAP = {
     "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
 }
 
+NO_COVER_NOTICE = "您发送到kernel邮件列表 {} 的补丁邮件由于缺少封面，所以不能转换为合并请求，请您仔细检查并提供封面后，" \
+                  "重新发送所有补丁邮件。您当前的补丁邮件列表地址如下： {}\n" \
+                  "You have sent a series of patches to the kernel mailing list {}, " \
+                  "but a cover doesn't have been sent, so bot can not generate a pull request. " \
+                  "Please check and apply a cover, then send all patches again. " \
+                  "Your current patch link in mailing list is as follows: {}"
+
+PR_SUCCESS = "您的补丁已转换为合并请求，链接地址： \n{}\n" \
+             "Your patch has been converted to a pull request, pull request link is: \n{}"
+
+APPLY_PATCH_FAILED_NOTICE = "您的补丁集在应用补丁到分支上时，发生了报错，报错信息如下： {}\n" \
+                            "您的补丁邮件列表地址： {}" \
+                            "When your patches are applying to the target branch, " \
+                            "an error occurs, and the error message is as follows: {} \n" \
+                            "The patches' link in mailing list is: {}"
+
 
 def make_fork_same_with_origin(branch_name, o, r):
     """
@@ -211,7 +227,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
     same = make_fork_same_with_origin(origin_branch, org, repo_name)
 
     if not same:
-        return "", "", ""
+        return "", "", "", ""
 
     new_branch = "patch-%s" % int(time.time())
     os.popen("git checkout -b %s origin/%s" % (new_branch, origin_branch)).readlines()
@@ -220,9 +236,12 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
     patches_dir = "/home/patches/{}/".format(ser_id)
     am_res = os.popen("git am --abort;git am %s*.patch" % patches_dir).readlines()
     am_success = False
+    am_failed_reason = ""
+
     for am_r in am_res:
         if am_r.__contains__("Patch failed at"):
             am_success = False
+            am_failed_reason = am_r
             print("failed to apply patch, reason is %s" % am_r)
             break
         else:
@@ -241,10 +260,10 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
         if retry_flag:
             os.popen("git push origin %s" % new_branch).readlines()
         # un_config_git()
-        return new_branch, org, repo_name
+        return new_branch, org, repo_name, am_failed_reason
     else:
         # un_config_git()
-        return new_branch, org, repo_name
+        return new_branch, org, repo_name, am_failed_reason
 
 
 # summit a pr
@@ -289,7 +308,7 @@ def make_pr_to_summit_commit(org, repo_name, source_branch, base_branch, token, 
     if res.status_code == 201:
         pull_link = res.json().get("html_url")
         send_mail_to_notice_developers(
-            "your patch has been converted to a pull request, pull request link is: \n%s" % pull_link, receiver_email,
+            PR_SUCCESS.format(pull_link, pull_link), receiver_email,
             cc_email, sub, msg_id, org + "/" + repo_name)
 
         # add /check-cla comment to pr
@@ -453,10 +472,10 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         cc.append(who_is_email_list)
 
         if "1/" in first_path_mail_name:
-            send_mail_to_notice_developers("You have sent a series of patches to the kernel mailing list, "
-                                           "but a cover doesn't have been sent, so bot can not generate a pull request. "
-                                           "Please check and apply a cover, then send all patches again",
-                                           [patch_sender_email], [], sub, msg_id, path_of_repo)
+            send_mail_to_notice_developers(NO_COVER_NOTICE.format(
+                "https://mailweb.openeuler.org/hyperkitty/list/kernel@openeuler.org/", email_list_link_of_patch,
+                "https://mailweb.openeuler.org/hyperkitty/list/kernel@openeuler.org/", email_list_link_of_patch),
+                [patch_sender_email], [], sub, msg_id, path_of_repo)
             cur.close()
             conn.close()
             return "", "", "", "", "", "", "", ""
@@ -688,7 +707,12 @@ def main():
         if target_branch is None:
             print("branch is ", branch, "can not match any branches")
             continue
-        source_branch, organization, rp = make_branch_and_apply_patch(repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
+        source_branch, organization, rp, failed_reason = make_branch_and_apply_patch(
+            repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
+
+        if failed_reason != "":
+            send_mail_to_notice_developers(APPLY_PATCH_FAILED_NOTICE.format(failed_reason, sync_pr, failed_reason, sync_pr),
+                                           emails_to_notify, [], subject_str, message_id, repo)
 
         if source_branch == "" or organization == "" or rp == "":
             information.remove(i)
