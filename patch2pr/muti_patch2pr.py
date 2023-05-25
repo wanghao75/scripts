@@ -58,10 +58,10 @@ RCFile_MAP = {
     "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
 }
 
-NO_COVER_NOTICE = "您发送到kernel邮件列表 {} 的补丁邮件由于缺少封面，所以不能转换为合并请求，请您仔细检查并提供封面后，" \
+NO_COVER_NOTICE = "您发送到kernel邮件列表 {} 的补丁邮件由于缺少封面，所以不能转换为合并请求，请您仔细检查并提供封面后，\n" \
                   "重新发送所有补丁邮件。您当前的补丁邮件列表地址如下： {}\n" \
-                  "You have sent a series of patches to the kernel mailing list {}, " \
-                  "but a cover doesn't have been sent, so bot can not generate a pull request. " \
+                  "\nYou have sent a series of patches to the kernel mailing list {}, " \
+                  "but a cover doesn't have been sent, so bot can not generate a pull request.\n" \
                   "Please check and apply a cover, then send all patches again. " \
                   "Your current patch link in mailing list is as follows: {}"
 
@@ -69,8 +69,8 @@ PR_SUCCESS = "您的补丁已转换为合并请求，链接地址： \n{}\n" \
              "Your patch has been converted to a pull request, pull request link is: \n{}"
 
 APPLY_PATCH_FAILED_NOTICE = "您的补丁集在应用补丁到分支上时，发生了报错，报错信息如下： {}\n" \
-                            "您的补丁邮件列表地址： {}" \
-                            "When your patches are applying to the target branch, " \
+                            "您的补丁邮件列表地址： {}\n" \
+                            "\nWhen your patches are applying to the target branch, " \
                             "an error occurs, and the error message is as follows: {} \n" \
                             "The patches' link in mailing list is: {}"
 
@@ -662,7 +662,7 @@ def main():
         if not same_in_db:
             infor_data.append(i)
             information.remove(i)
-            print("getmail did not pull all emails from %s, so skip", i)
+            print("getmail did not pull all emails from %s, so skip" % i)
             continue
 
         branch = ""
