@@ -710,7 +710,8 @@ def main():
             continue
         source_branch, organization, rp, failed_reason = make_branch_and_apply_patch(
             repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
-
+        
+        print("failed reason = ", failed_reason)
         if len(failed_reason) != 0:
             send_mail_to_notice_developers(
                 APPLY_PATCH_FAILED_NOTICE.format("".join(failed_reason), sync_pr, "".join(failed_reason), sync_pr),
