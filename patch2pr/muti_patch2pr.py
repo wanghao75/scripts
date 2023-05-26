@@ -58,21 +58,22 @@ RCFile_MAP = {
     "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
 }
 
-NO_COVER_NOTICE = "您发送到kernel邮件列表 {} 的补丁邮件由于缺少封面，所以不能转换为合并请求，请您仔细检查并提供封面后，\n" \
-                  "重新发送所有补丁邮件。您当前的补丁邮件列表地址如下： {}\n" \
-                  "\nYou have sent a series of patches to the kernel mailing list {}, " \
+NO_COVER_NOTICE = "问题描述：您发送到kernel邮件列表: {} 的补丁邮件由于缺少封面，所以机器人不能将其转换为合并请求.\n" \
+                  "解决办法建议：请您仔细检查并提供封面后，重新发送所有补丁邮件到邮件列表.\n" \
+                  "当前的问题补丁邮件列表地址如下： {}\n" \
+                  "\nProblem Description：You have sent a series of patches to the kernel mailing list: {}, " \
                   "but a cover doesn't have been sent, so bot can not generate a pull request.\n" \
-                  "Please check and apply a cover, then send all patches again. " \
-                  "Your current patch link in mailing list is as follows: {}"
+                  "Solution：Please check and apply a cover, then send all patches again. " \
+                  "The current link in mailing list is as follows: {}"
 
 PR_SUCCESS = "您的补丁已转换为合并请求，链接地址： \n{}\n" \
              "Your patch has been converted to a pull request, pull request link is: \n{}"
 
-APPLY_PATCH_FAILED_NOTICE = "您的补丁集在应用补丁到分支上时，发生了报错，报错信息如下： {}\n" \
+APPLY_PATCH_FAILED_NOTICE = "您的补丁集在应用补丁到分支上时，发生了报错，报错信息如下： \n{}" \
                             "您的补丁邮件列表地址： {}\n" \
-                            "\nWhen your patches are applying to the target branch, " \
-                            "an error occurs, and the error message is as follows: {} \n" \
-                            "The patches' link in mailing list is: {}"
+                            "When your patches are applying to the target branch, " \
+                            "an error occurs, and the error message is as follows: \n{}" \
+                            "The current link in mailing list is: {}"
 
 
 def make_fork_same_with_origin(branch_name, o, r):
@@ -227,7 +228,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
     same = make_fork_same_with_origin(origin_branch, org, repo_name)
 
     if not same:
-        return "", "", "", ""
+        return "", "", "", []
 
     new_branch = "patch-%s" % int(time.time())
     os.popen("git checkout -b %s origin/%s" % (new_branch, origin_branch)).readlines()
@@ -236,12 +237,12 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
     patches_dir = "/home/patches/{}/".format(ser_id)
     am_res = os.popen("git am --abort;git am %s*.patch" % patches_dir).readlines()
     am_success = False
-    am_failed_reason = ""
+    am_failed_reason = []
 
     for am_r in am_res:
         if am_r.__contains__("Patch failed at"):
             am_success = False
-            am_failed_reason = am_r
+            am_failed_reason = am_res
             print("failed to apply patch, reason is %s" % am_r)
             break
         else:
@@ -710,9 +711,10 @@ def main():
         source_branch, organization, rp, failed_reason = make_branch_and_apply_patch(
             repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
 
-        if failed_reason != "":
-            send_mail_to_notice_developers(APPLY_PATCH_FAILED_NOTICE.format(failed_reason, sync_pr, failed_reason, sync_pr),
-                                           emails_to_notify, [], subject_str, message_id, repo)
+        if len(failed_reason) != 0:
+            send_mail_to_notice_developers(
+                APPLY_PATCH_FAILED_NOTICE.format("".join(failed_reason), sync_pr, "".join(failed_reason), sync_pr), 
+                emails_to_notify, [], subject_str, message_id, repo)
 
         if source_branch == "" or organization == "" or rp == "":
             information.remove(i)
