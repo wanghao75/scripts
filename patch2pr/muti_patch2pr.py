@@ -228,7 +228,7 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
     same = make_fork_same_with_origin(origin_branch, org, repo_name)
 
     if not same:
-        return "", "", "", []
+        return "", "", "", ""
 
     new_branch = "patch-%s" % int(time.time())
     os.popen("git checkout -b %s origin/%s" % (new_branch, origin_branch)).readlines()
@@ -237,12 +237,12 @@ def make_branch_and_apply_patch(user, token, origin_branch, ser_id, repository_p
     patches_dir = "/home/patches/{}/".format(ser_id)
     am_res = os.popen("git am --abort;git am %s*.patch" % patches_dir).readlines()
     am_success = False
-    am_failed_reason = []
+    am_failed_reason = ""
 
     for am_r in am_res:
         if am_r.__contains__("Patch failed at"):
             am_success = False
-            am_failed_reason = am_res
+            am_failed_reason = am_r
             print("failed to apply patch, reason is %s" % am_r)
             break
         else:
@@ -710,11 +710,10 @@ def main():
             continue
         source_branch, organization, rp, failed_reason = make_branch_and_apply_patch(
             repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
-        
-        print("failed reason = ", failed_reason)
-        if len(failed_reason) != 0:
+
+        if failed_reason != "":
             send_mail_to_notice_developers(
-                APPLY_PATCH_FAILED_NOTICE.format("".join(failed_reason), sync_pr, "".join(failed_reason), sync_pr),
+                APPLY_PATCH_FAILED_NOTICE.format(failed_reason, sync_pr, failed_reason, sync_pr),
                 emails_to_notify, [], subject_str, message_id, repo)
             continue
 
