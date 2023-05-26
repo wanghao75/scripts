@@ -713,8 +713,9 @@ def main():
 
         if len(failed_reason) != 0:
             send_mail_to_notice_developers(
-                APPLY_PATCH_FAILED_NOTICE.format("".join(failed_reason), sync_pr, "".join(failed_reason), sync_pr), 
+                APPLY_PATCH_FAILED_NOTICE.format("".join(failed_reason), sync_pr, "".join(failed_reason), sync_pr),
                 emails_to_notify, [], subject_str, message_id, repo)
+            continue
 
         if source_branch == "" or organization == "" or rp == "":
             information.remove(i)
