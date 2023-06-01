@@ -63,7 +63,7 @@ PR_SUCCESS = "反馈：\n" \
              "PR链接地址： {}\n" \
              "邮件列表地址：{}\n" \
              "\nFeedBack:\n" \
-             "The patch(es) which you have sent to mailing list has been converted to a pull request successfully!\n" \
+             "The patch(es) which you have sent to {} mailing list has been converted to a pull request successfully!\n" \
              "Pull request link: {}\n" \
              "Mailing list address: {}\n"
 
@@ -487,7 +487,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
             zh_suggest = "请提供补丁集并重新发送您的补丁集到邮件列表"
             en_reason = "the cover of the patches is missing"
             en_suggest = "please checkout and apply the patches' cover and send all again"
-            content = PR_FAILED.format(cc[0], email_list_link_of_patch, zh_reason, zh_suggest, 
+            content = PR_FAILED.format(cc[0], email_list_link_of_patch, zh_reason, zh_suggest,
                                        cc[0], email_list_link_of_patch, en_reason, en_suggest)
             send_mail_to_notice_developers(content, [patch_sender_email], [], sub, msg_id, path_of_repo)
             cur.close()
