@@ -73,7 +73,7 @@ PR_FAILED = "反馈:\n" \
             "失败原因：{}\n" \
             "建议解决方法：{}\n" \
             "\nFeedBack:\n" \
-            "The patch(es) which you have sent to {} has been converted to PR failed!" \
+            "The patch(es) which you have sent to {} has been converted to PR failed!\n" \
             "Mailing list address: {}\n" \
             "Failed Reason: {}\n" \
             "Suggest Solution: {}\n"
