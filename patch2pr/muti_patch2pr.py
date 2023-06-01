@@ -58,22 +58,25 @@ RCFile_MAP = {
     "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
 }
 
-NO_COVER_NOTICE = "问题描述：您发送到kernel邮件列表: {} 的补丁邮件由于缺少封面，所以机器人不能将其转换为合并请求.\n" \
-                  "解决办法建议：请您仔细检查并提供封面后，重新发送所有补丁邮件到邮件列表.\n" \
-                  "当前的问题补丁邮件列表地址如下： {}\n" \
-                  "\nProblem Description：You have sent a series of patches to the kernel mailing list: {}, " \
-                  "but a cover doesn't have been sent, so bot can not generate a pull request.\n" \
-                  "Solution：Please check and apply a cover, then send all patches again. " \
-                  "The current link in mailing list is as follows: {}"
+PR_SUCCESS = "反馈：\n" \
+             "您发送到{}的补丁/补丁集，已成功转换为PR！\n" \
+             "PR链接地址： {}\n" \
+             "邮件列表地址：{}\n" \
+             "\nFeedBack:\n" \
+             "The patch(es) which you have sent to mailing list has been converted to a pull request successfully!\n" \
+             "Pull request link: {}\n" \
+             "Mailing list address: {}\n"
 
-PR_SUCCESS = "您的补丁已转换为合并请求，链接地址： \n{}\n" \
-             "Your patch has been converted to a pull request, pull request link is: \n{}"
-
-APPLY_PATCH_FAILED_NOTICE = "您的补丁集在应用补丁到分支上时，发生了报错，报错信息如下： \n{}" \
-                            "您的补丁邮件列表地址： {}\n" \
-                            "When your patches are applying to the target branch, " \
-                            "an error occurs, and the error message is as follows: \n{}" \
-                            "The current link in mailing list is: {}"
+PR_FAILED = "反馈:\n" \
+            "您发送到{}的补丁/补丁集，转换为PR失败！\n" \
+            "邮件列表地址：{}\n" \
+            "失败原因：{}\n" \
+            "建议解决方法：{}\n" \
+            "\nFeedBack:\n" \
+            "The patch(es) which you have sent to {} has been converted to PR failed!" \
+            "Mailing list address: {}\n" \
+            "Failed Reason: {}\n" \
+            "Suggest Solution: {}\n"
 
 
 def make_fork_same_with_origin(branch_name, o, r):
@@ -299,18 +302,21 @@ def make_pr_to_summit_commit(org, repo_name, source_branch, base_branch, token, 
     while True:
         if res.status_code != 201:
             if try_times >= 2:
-                print(res.status_code)
                 break
             res = requests.post(url=create_pr_url, data=data)
             try_times += 1
         else:
             break
 
+    pr_failed_reason = ""
+
     if res.status_code == 201:
         pull_link = res.json().get("html_url")
+        content = PR_SUCCESS.format(cc_email[0], pull_link, pr_url_in_email_list,
+                                    cc_email[0], pull_link, pr_url_in_email_list)
         send_mail_to_notice_developers(
-            PR_SUCCESS.format(pull_link, pull_link), receiver_email,
-            cc_email, sub, msg_id, org + "/" + repo_name)
+            content, receiver_email, cc_email, sub, msg_id, org + "/" + repo_name
+        )
 
         # add /check-cla comment to pr
         comment_data = {
@@ -331,9 +337,13 @@ def make_pr_to_summit_commit(org, repo_name, source_branch, base_branch, token, 
         if rsp.status_code != 201:
             requests.post(url=comment_url, data=comment_data)
 
-        return True
+        return True, pr_failed_reason
     else:
-        return False
+        if len(res.json()) != 0:
+            pr_failed_reason = res.json().get("message")
+        else:
+            pr_failed_reason = "Unknown error"
+        return False, pr_failed_reason
 
 
 # use email to notice that pr has been created
@@ -473,10 +483,13 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         cc.append(who_is_email_list)
 
         if "1/" in first_path_mail_name:
-            send_mail_to_notice_developers(NO_COVER_NOTICE.format(
-                "https://mailweb.openeuler.org/hyperkitty/list/kernel@openeuler.org/", email_list_link_of_patch,
-                "https://mailweb.openeuler.org/hyperkitty/list/kernel@openeuler.org/", email_list_link_of_patch),
-                [patch_sender_email], [], sub, msg_id, path_of_repo)
+            zh_reason = "补丁集缺失封面信息"
+            zh_suggest = "请提供补丁集并重新发送您的补丁集到邮件列表"
+            en_reason = "the cover of the patches is missing"
+            en_suggest = "please checkout and apply the patches' cover and send all again"
+            content = PR_FAILED.format(cc[0], email_list_link_of_patch, zh_reason, zh_suggest, 
+                                       cc[0], email_list_link_of_patch, en_reason, en_suggest)
+            send_mail_to_notice_developers(content, [patch_sender_email], [], sub, msg_id, path_of_repo)
             cur.close()
             conn.close()
             return "", "", "", "", "", "", "", ""
@@ -683,9 +696,9 @@ def main():
 
         # in production environment， deploy on one branch
         branch = branch.strip(" ")
-        if branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
-            print("branch doesn't match, ignore it")
-            return
+        # if branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"] and repo == "openeuler/kernel":
+        #     print("branch doesn't match, ignore it")
+        #     continue
 
         config_git_pw(project_name, server, server_token)
 
@@ -705,30 +718,80 @@ def main():
 
         # use patches
         target_branch = BRANCHES_MAP.get(repo).get(branch)
+        branch_not_match = False
         if target_branch is None:
+            branch_not_match = True
+        else:
+            if repo == "openeuler/kernel" \
+                    and target_branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
+                branch_not_match = True
+
+        if branch_not_match:
             print("branch is ", branch, "can not match any branches")
+            zh_reason = "补丁/补丁集的标题分支与仓库分支列表不匹配"
+            zh_suggest = "请确认补丁标题分支，若有误则修改，无则忽略"
+            en_reason = "branch in patch(es)'s title can not match any branches in repository's branch list"
+            en_suggest = "please checkout if the patch(es)'s title is wrong and fix it, if not ignore this"
+            content = PR_FAILED.format(
+                cc[0], sync_pr, zh_reason, zh_suggest, cc[0], sync_pr, en_reason, en_suggest
+            )
+
+            send_mail_to_notice_developers(
+                content, emails_to_notify, [], subject_str, message_id, repo
+            )
             continue
+
         source_branch, organization, rp, failed_reason = make_branch_and_apply_patch(
             repo_user, not_cibot_gitee_token, target_branch, series_id, repo)
 
         if failed_reason != "":
+            zh_reason = "应用补丁/补丁集失败，%s" % failed_reason
+            zh_suggest = "请查看失败原因， 确认补丁是否可以应用在当前期望分支的最新代码上"
+            en_reason = "apply patch(es) failed, %s" % failed_reason
+            en_suggest = "please checkout if the failed patch(es) can work on the newest codes in expected branch"
+            content = PR_FAILED.format(
+                cc[0], sync_pr, zh_reason, zh_suggest, cc[0], sync_pr, en_reason, en_suggest
+            )
+
             send_mail_to_notice_developers(
-                APPLY_PATCH_FAILED_NOTICE.format(failed_reason, sync_pr, failed_reason, sync_pr),
-                emails_to_notify, [], subject_str, message_id, repo)
+                content, emails_to_notify, [], subject_str, message_id, repo
+            )
             continue
 
         if source_branch == "" or organization == "" or rp == "":
             information.remove(i)
             infor_data.append(i)
+
+            zh_reason = "同步源码仓代码到fork仓失败"
+            zh_suggest = "请稍等，机器人会在下一次任务重新执行"
+            en_reason = "sync origin kernel's codes to the fork repository failed"
+            en_suggest = "please wait, the bot will retry in the next interval"
+            content = PR_FAILED.format(
+                cc[0], sync_pr, zh_reason, zh_suggest, cc[0], sync_pr, en_reason, en_suggest
+            )
+
+            # sync codes from origin failed, so send email to tell developer what happened
+            send_mail_to_notice_developers(content, emails_to_notify, [], subject_str, message_id, repo)
             continue
 
         # make pr
-        pr_success = make_pr_to_summit_commit(organization, rp, source_branch, target_branch, not_cibot_gitee_token,
+        pr_success, reason = make_pr_to_summit_commit(organization, rp, source_branch, target_branch, not_cibot_gitee_token,
                                  sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str, message_id)
 
-        if not pr_success:
+        if not pr_success and reason:
             information.remove(i)
             infor_data.append(i)
+
+            zh_reason = "调用gitee api创建PR失败， 失败原因如下： %s" % reason
+            zh_suggest = "请稍等，机器人会在下一次任务重新执行"
+            en_reason = "create PR failed when call gitee's api, failed reason is as follows: %s" % reason
+            en_suggest = "please wait, the bot will retry in the next interval"
+            content = PR_FAILED.format(
+                cc[0], sync_pr, zh_reason, zh_suggest, cc[0], sync_pr, en_reason, en_suggest
+            )
+
+            # call gitee api to create PR failed, so send mail to tell developers what happened and take easy
+            send_mail_to_notice_developers(content, emails_to_notify, [], subject_str, message_id, repo)
             continue
 
     if len(infor_data) != 0:
