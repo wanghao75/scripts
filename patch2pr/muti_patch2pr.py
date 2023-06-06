@@ -500,7 +500,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                               email_from.split("<")[0].split(" ")[1]
 
         # deal with Message-ID
-        msg_id = email_msg.get("Message-ID").replace("\n", "")
+        msg_id = email_msg.get("Message-ID") or email_msg.get("Message-Id")
 
         # deal with Archived-at
         # email_list_link_of_patch = email_msg.get("Archived-At").replace(" ", "").replace("\n", "")
@@ -578,8 +578,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     title_for_pr = cover_name.split("]")[1]
 
     cover_who_is_email_list = ""
-    cover_data = cover_headers.split("\n")
-
+    
     # new code using email
     email_msg = email.message_from_string(cover_headers)
     # deal with email To
@@ -624,10 +623,10 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                           email_from.split("<")[0].split(" ")[1]
 
     # deal with Message-ID
-    msg_id = email_msg.get("Message-ID")
+    msg_id = email_msg.get("Message-ID") or email_msg.get("Message-Id")
 
     # deal with Archived-at
-    # email_list_link_of_patch = email_msg.get("Archived-At").replace(" ", "").replace("\n", "")
+    email_list_link_of_patch = email_msg.get("Archived-At").replace(" ", "").replace("\n", "")
 
     print("$$$$$$$$$$$$$$$$$$$$$$\n", committer, patch_sender_email, patch_send_name, cover_who_is_email_list,
           msg_id, email_list_link_of_patch, "\n$$$$$$$$$$$$$$$$$$$")
