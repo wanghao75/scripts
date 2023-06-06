@@ -58,6 +58,8 @@ RCFile_MAP = {
     "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
 }
 
+MAILING_LIST = ["kernel@openeuler.org", "kernel-build@openeuler.org"]
+
 PR_SUCCESS = "反馈：\n" \
              "您发送到{}的补丁/补丁集，已成功转换为PR！\n" \
              "PR链接地址： {}\n" \
@@ -453,36 +455,87 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
             "SELECT headers from patchwork_patch where series_id={} and name='{}'".format(ser_id, first_path_mail_name))
         patches_headers_rows = cur.fetchall()
         who_is_email_list = ""
-        for row in patches_headers_rows:
-            data = row[0].split("\n")
-            for index, string in enumerate(data):
-                email_message = email.message_from_string(row[0])
-                email_to = email_message.get("To")
-                print("email_to === ", email_to, type(email_to))
-                if string.startswith("To: "):
-                    if "<" in string:
-                        who_is_email_list = string.split("<")[1].split(">")[0]
-                    else:
-                        who_is_email_list = string.split(" ")[1]
-                if string.startswith("From: "):
-                    if "<" not in string and ">" not in string:
-                        email_from = data[index + 1]
-                        email_from_name = base64.b64decode(string.split("From: ")[1].split("?b?")[1].split("?=")[0]) \
-                            .decode("gb18030")
-                        committer = email_from_name + " " + email_from
-                        patch_sender_email = email_from.split("<")[1].split(">")[0]
-                        patch_send_name = email_from_name
-                    else:
-                        committer = string.split("From:")[1]
-                        patch_sender_email = string.split("<")[1].split(">")[0]
-                        patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
-                                          string.split("<")[0].split("From:")[1].split(" ")[2]
-                if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
-                    email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
-                if string.startswith("Message-Id: "):
-                    msg_id = string.split("Message-Id: ")[1]
-                if string.startswith("Message-ID: "):
-                    msg_id = string.split("Message-ID: ")[1]
+
+        # new code using email
+        email_msg = email.message_from_string(patches_headers_rows[0][0])
+        # deal with email To
+        email_to = email_msg.get("To").replace("\n\t", "").replace(" ", "")
+        if "," in email_to:
+            email_list = email_to.split(",")
+            for e in email_list:
+                if "<" in e and ">" in e:
+                    if e.split("<")[1].split(">")[0] in MAILING_LIST:
+                        who_is_email_list = e.split("<")[1].split(">")[0]
+                else:
+                    if e in MAILING_LIST:
+                        who_is_email_list = e
+        else:
+            e = email_to
+            if "<" in e and ">" in e:
+                if e.split("<")[1].split(">")[0] in MAILING_LIST:
+                    who_is_email_list = e.split("<")[1].split(">")[0]
+            else:
+                if e in MAILING_LIST:
+                    who_is_email_list = e
+
+        # deal with From
+        email_from = email_msg.get("From")
+
+        if "<" not in email_from and ">" not in email_from:
+            # deal with email address like this xx@xx.com, not like X XX <xxx@xxx.com>
+            e_re = re.compile(r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$')
+            if e_re.match(email_from):
+                patch_sender_email = email_from
+                committer = patch_sender_email.split("@")[0] + " " + patch_sender_email
+                patch_send_name = patch_sender_email.split("@")[0]
+            else:
+                e_from = email_from.split(" ")[-1]
+                patch_sender_email = e_from
+                committer = patch_sender_email.split("@")[0] + " " + patch_sender_email
+                patch_send_name = patch_sender_email.split("@")[0]
+        else:
+            committer = email_from
+            patch_sender_email = email_from.split("<")[1].split(">")[0]
+            patch_send_name = email_from.split("<")[0].split(" ")[0] + " " + \
+                              email_from.split("<")[0].split(" ")[1]
+        
+        # deal with Message-ID
+        msg_id = email_msg.get("Message-ID")
+        
+        # deal with Archived-at
+        email_list_link_of_patch = email_msg.get("Archived-At")
+        
+
+        # for row in patches_headers_rows:
+        #     data = row[0].split("\n")
+        #     for index, string in enumerate(data):
+        #         email_message = email.message_from_string(row[0])
+        #         email_to = email_message.get("To")
+        #         print("email_to === ", email_to, type(email_to))
+        #         if string.startswith("To: "):
+        #             if "<" in string:
+        #                 who_is_email_list = string.split("<")[1].split(">")[0]
+        #             else:
+        #                 who_is_email_list = string.split(" ")[1]
+        #         if string.startswith("From: "):
+        #             if "<" not in string and ">" not in string:
+        #                 email_from = data[index + 1]
+        #                 email_from_name = base64.b64decode(string.split("From: ")[1].split("?b?")[1].split("?=")[0]) \
+        #                     .decode("gb18030")
+        #                 committer = email_from_name + " " + email_from
+        #                 patch_sender_email = email_from.split("<")[1].split(">")[0]
+        #                 patch_send_name = email_from_name
+        #             else:
+        #                 committer = string.split("From:")[1]
+        #                 patch_sender_email = string.split("<")[1].split(">")[0]
+        #                 patch_send_name = string.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
+        #                                   string.split("<")[0].split("From:")[1].split(" ")[2]
+        #         if string.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % who_is_email_list):
+        #             email_list_link_of_patch = string.replace("<", "").replace(">", "").replace("message", "thread")
+        #         if string.startswith("Message-Id: "):
+        #             msg_id = string.split("Message-Id: ")[1]
+        #         if string.startswith("Message-ID: "):
+        #             msg_id = string.split("Message-ID: ")[1]
         cc.append(who_is_email_list)
 
         if "1/" in first_path_mail_name:
@@ -501,6 +554,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         config_git(patch_sender_email, patch_send_name)
         cur.close()
         conn.close()
+
+        print("&&&&&&&&&&&&&&&&&&&&&&&&&&\n", committer, patch_sender_email, patch_send_name, who_is_email_list,
+              msg_id, email_list_link_of_patch, "\n&&&&&&&&&&&&&&&&&&&&&&&&&")
 
         return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub, msg_id
 
@@ -524,36 +580,84 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     cover_who_is_email_list = ""
     cover_data = cover_headers.split("\n")
 
-    email_message = email.message_from_string(cover_headers)
-    email_to = email_message.get("To")
-    print("email_to === ", email_to, type(email_to))
-
-    for idx, ch in enumerate(cover_data):
-        if ch.startswith("Message-Id: "):
-            msg_id = ch.split("Message-Id: ")[1]
-        if ch.startswith("Message-ID: "):
-            msg_id = ch.split("Message-ID: ")[1]
-        if ch.startswith("To: "):
-            if "<" in ch:
-                cover_who_is_email_list = ch.split("<")[1].split(">")[0]
+    # new code using email
+    email_msg = email.message_from_string(cover_headers)
+    # deal with email To
+    email_to = email_msg.get("To").replace("\n\t", "").replace(" ", "")
+    if "," in email_to:
+        email_list = email_to.split(",")
+        for e in email_list:
+            if "<" in e and ">" in e:
+                if e.split("<")[1].split(">")[0] in MAILING_LIST:
+                    cover_who_is_email_list = e.split("<")[1].split(">")[0]
             else:
-                cover_who_is_email_list = ch.split(" ")[1]
-        if ch.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % cover_who_is_email_list):
-            email_list_link_of_patch = ch.replace("<", "").replace(">", "").replace("message", "thread")
-        if ch.startswith("From: "):
+                if e in MAILING_LIST:
+                    cover_who_is_email_list = e
+    else:
+        e = email_to
+        if "<" in e and ">" in e:
+            if e.split("<")[1].split(">")[0] in MAILING_LIST:
+                cover_who_is_email_list = e.split("<")[1].split(">")[0]
+        else:
+            if e in MAILING_LIST:
+                cover_who_is_email_list = e
 
-            if "<" not in ch and ">" not in ch:
-                email_from = cover_data[idx + 1]
-                email_from_name = base64.b64decode(ch.split("From: ")[1].split("?b?")[1].split("?=")[0]) \
-                    .decode("gb18030")
-                committer = email_from_name + " " + email_from
-                patch_sender_email = email_from.split("<")[1].split(">")[0]
-                patch_send_name = email_from_name
-            else:
-                committer = ch.split("From:")[1]
-                patch_sender_email = ch.split("<")[1].split(">")[0]
-                patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
-                                  ch.split("<")[0].split("From:")[1].split(" ")[2]
+    # deal with From
+    email_from = email_msg.get("From")
+
+    if "<" not in email_from and ">" not in email_from:
+        # deal with email address like this xx@xx.com, not like X XX <xxx@xxx.com>
+        e_re = re.compile(r'^\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*$')
+        if e_re.match(email_from):
+            patch_sender_email = email_from
+            committer = patch_sender_email.split("@")[0] + " " + patch_sender_email
+            patch_send_name = patch_sender_email.split("@")[0]
+        else:
+            e_from = email_from.split(" ")[-1]
+            patch_sender_email = e_from
+            committer = patch_sender_email.split("@")[0] + " " + patch_sender_email
+            patch_send_name = patch_sender_email.split("@")[0]
+    else:
+        committer = email_from
+        patch_sender_email = email_from.split("<")[1].split(">")[0]
+        patch_send_name = email_from.split("<")[0].split(" ")[0] + " " + \
+                          email_from.split("<")[0].split(" ")[1]
+
+    # deal with Message-ID
+    msg_id = email_msg.get("Message-ID")
+
+    # deal with Archived-at
+    email_list_link_of_patch = email_msg.get("Archived-At")
+    
+    print("$$$$$$$$$$$$$$$$$$$$$$\n", committer, patch_sender_email, patch_send_name, cover_who_is_email_list, 
+          msg_id, email_list_link_of_patch, "\n$$$$$$$$$$$$$$$$$$$")
+
+    # for idx, ch in enumerate(cover_data):
+    #     if ch.startswith("Message-Id: "):
+    #         msg_id = ch.split("Message-Id: ")[1]
+    #     if ch.startswith("Message-ID: "):
+    #         msg_id = ch.split("Message-ID: ")[1]
+    #     if ch.startswith("To: "):
+    #         if "<" in ch:
+    #             cover_who_is_email_list = ch.split("<")[1].split(">")[0]
+    #         else:
+    #             cover_who_is_email_list = ch.split(" ")[1]
+    #     if ch.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % cover_who_is_email_list):
+    #         email_list_link_of_patch = ch.replace("<", "").replace(">", "").replace("message", "thread")
+    #     if ch.startswith("From: "):
+    # 
+    #         if "<" not in ch and ">" not in ch:
+    #             email_from = cover_data[idx + 1]
+    #             email_from_name = base64.b64decode(ch.split("From: ")[1].split("?b?")[1].split("?=")[0]) \
+    #                 .decode("gb18030")
+    #             committer = email_from_name + " " + email_from
+    #             patch_sender_email = email_from.split("<")[1].split(">")[0]
+    #             patch_send_name = email_from_name
+    #         else:
+    #             committer = ch.split("From:")[1]
+    #             patch_sender_email = ch.split("<")[1].split(">")[0]
+    #             patch_send_name = ch.split("<")[0].split("From:")[1].split(" ")[1] + " " + \
+    #                               ch.split("<")[0].split("From:")[1].split(" ")[2]
     cc.append(cover_who_is_email_list)
 
     for ct in cover_content.split("\n"):
