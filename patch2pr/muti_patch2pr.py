@@ -627,7 +627,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     msg_id = email_msg.get("Message-ID") or email_msg.get("Message-Id")
 
     # deal with Archived-at
-    email_list_link_of_patch = email_msg.get("Archived-At").replace(" ", "").replace("\n", "")
+    # email_list_link_of_patch = email_msg.get("Archived-At").replace(" ", "").replace("\n", "")
 
     print("$$$$$$$$$$$$$$$$$$$$$$\n", committer, patch_sender_email, patch_send_name, cover_who_is_email_list,
           msg_id, email_list_link_of_patch, "\n$$$$$$$$$$$$$$$$$$$")
