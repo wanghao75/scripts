@@ -456,6 +456,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         for row in patches_headers_rows:
             data = row[0].split("\n")
             for index, string in enumerate(data):
+                email_message = email.message_from_string(row[0])
+                email_to = email_message.get("To")
+                print("email_to === ", email_to)
                 if string.startswith("To: "):
                     if "<" in string:
                         who_is_email_list = string.split("<")[1].split(">")[0]
@@ -520,6 +523,11 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
 
     cover_who_is_email_list = ""
     cover_data = cover_headers.split("\n")
+
+    email_message = email.message_from_string(cover_headers)
+    email_to = email_message.get("To")
+    print("email_to === ", email_to)
+    
     for idx, ch in enumerate(cover_data):
         if ch.startswith("Message-Id: "):
             msg_id = ch.split("Message-Id: ")[1]
@@ -675,7 +683,6 @@ def main():
         same_in_db = check_patches_number_same_with_subject(series_id, tag)
         if not same_in_db:
             infor_data.append(i)
-            information.remove(i)
             print("getmail did not pull all emails from %s, so skip" % i)
             continue
 
@@ -759,7 +766,6 @@ def main():
             continue
 
         if source_branch == "" or organization == "" or rp == "":
-            information.remove(i)
             infor_data.append(i)
 
             zh_reason = "同步源码仓代码到fork仓失败"
@@ -779,7 +785,6 @@ def main():
                                  sync_pr, letter_body, emails_to_notify, title_pr, comm, cc_list, subject_str, message_id)
 
         if not pr_success and reason:
-            information.remove(i)
             infor_data.append(i)
 
             zh_reason = "调用gitee api创建PR失败， 失败原因如下： %s" % reason
