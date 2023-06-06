@@ -462,6 +462,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         email_to = email_msg.get("To").replace("\n\t", "").replace(" ", "")
         if "," in email_to:
             email_list = email_to.split(",")
+            print("email_list === ", email_list)
             for e in email_list:
                 if "<" in e and ">" in e:
                     if e.split("<")[1].split(">")[0] in MAILING_LIST:
@@ -578,7 +579,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     title_for_pr = cover_name.split("]")[1]
 
     cover_who_is_email_list = ""
-    
+
     # new code using email
     email_msg = email.message_from_string(cover_headers)
     # deal with email To
