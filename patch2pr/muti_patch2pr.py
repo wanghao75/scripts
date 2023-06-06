@@ -458,7 +458,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
             for index, string in enumerate(data):
                 email_message = email.message_from_string(row[0])
                 email_to = email_message.get("To")
-                print("email_to === ", email_to)
+                print("email_to === ", email_to, type(email_to))
                 if string.startswith("To: "):
                     if "<" in string:
                         who_is_email_list = string.split("<")[1].split(">")[0]
@@ -526,8 +526,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
 
     email_message = email.message_from_string(cover_headers)
     email_to = email_message.get("To")
-    print("email_to === ", email_to)
-    
+    print("email_to === ", email_to, type(email_to))
+
     for idx, ch in enumerate(cover_data):
         if ch.startswith("Message-Id: "):
             msg_id = ch.split("Message-Id: ")[1]
