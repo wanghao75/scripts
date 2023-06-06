@@ -58,7 +58,7 @@ RCFile_MAP = {
     "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
 }
 
-MAILING_LIST = ["kernel@openeuler.org", "kernel-build@openeuler.org"]
+MAILING_LIST = ["kernel@openeuler.org", "kernel-build@openeuler.org", "wanghaosqsq@163.com"]
 
 PR_SUCCESS = "反馈：\n" \
              "您发送到{}的补丁/补丁集，已成功转换为PR！\n" \
