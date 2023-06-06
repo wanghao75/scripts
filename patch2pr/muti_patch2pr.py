@@ -498,13 +498,13 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
             patch_sender_email = email_from.split("<")[1].split(">")[0]
             patch_send_name = email_from.split("<")[0].split(" ")[0] + " " + \
                               email_from.split("<")[0].split(" ")[1]
-        
+
         # deal with Message-ID
         msg_id = email_msg.get("Message-ID")
-        
+
         # deal with Archived-at
         email_list_link_of_patch = email_msg.get("Archived-At")
-        
+
 
         # for row in patches_headers_rows:
         #     data = row[0].split("\n")
@@ -538,6 +538,9 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         #             msg_id = string.split("Message-ID: ")[1]
         cc.append(who_is_email_list)
 
+        print("&&&&&&&&&&&&&&&&&&&&&&&&&&\n", committer, patch_sender_email, patch_send_name, who_is_email_list,
+              msg_id, email_list_link_of_patch, "\n&&&&&&&&&&&&&&&&&&&&&&&&&")
+
         if "1/" in first_path_mail_name:
             zh_reason = "补丁集缺失封面信息"
             zh_suggest = "请提供补丁集并重新发送您的补丁集到邮件列表"
@@ -554,9 +557,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         config_git(patch_sender_email, patch_send_name)
         cur.close()
         conn.close()
-
-        print("&&&&&&&&&&&&&&&&&&&&&&&&&&\n", committer, patch_sender_email, patch_send_name, who_is_email_list,
-              msg_id, email_list_link_of_patch, "\n&&&&&&&&&&&&&&&&&&&&&&&&&")
 
         return patch_sender_email, body, email_list_link_of_patch, title_for_pr, committer, cc, sub, msg_id
 
@@ -628,8 +628,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
 
     # deal with Archived-at
     email_list_link_of_patch = email_msg.get("Archived-At")
-    
-    print("$$$$$$$$$$$$$$$$$$$$$$\n", committer, patch_sender_email, patch_send_name, cover_who_is_email_list, 
+
+    print("$$$$$$$$$$$$$$$$$$$$$$\n", committer, patch_sender_email, patch_send_name, cover_who_is_email_list,
           msg_id, email_list_link_of_patch, "\n$$$$$$$$$$$$$$$$$$$")
 
     # for idx, ch in enumerate(cover_data):
@@ -645,7 +645,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     #     if ch.__contains__("https://mailweb.openeuler.org/hyperkitty/list/%s/message/" % cover_who_is_email_list):
     #         email_list_link_of_patch = ch.replace("<", "").replace(">", "").replace("message", "thread")
     #     if ch.startswith("From: "):
-    # 
+    #
     #         if "<" not in ch and ">" not in ch:
     #             email_from = cover_data[idx + 1]
     #             email_from_name = base64.b64decode(ch.split("From: ")[1].split("?b?")[1].split("?=")[0]) \
