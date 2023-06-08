@@ -769,7 +769,10 @@ def notice_dropped_patches_sender(data_string: str):
     cur.execute("SELECT email FROM patchwork_person where id={}".format(submitter_id))
     submitter_email = cur.fetchall()[0][0]
 
-    zh_reason = "重试三次后任无法创建PR，因此丢弃此补丁/补丁集"
+    cur.close()
+    conn.close()
+
+    zh_reason = "重试三次后仍无法创建PR，因此丢弃此补丁/补丁集"
     zh_suggest = "请确认补丁是否存在问题或者漏发，无误后重新发送至邮件列表"
     en_reason = "bot can not create PR after tried three times, so bot drop this patch(es)"
     en_suggest = "please checkout if something is wrong with your patches or you have missed some patches, " \
@@ -799,7 +802,7 @@ def check_retry_times(information: list):
                 patch_to_retry_list.append(i)
             with open("/home/patches/check.json", "w", encoding="utf-8") as ff:
                 json.dump(dic, ff)
-            
+
             return patch_to_retry_list
 
         else:
@@ -815,7 +818,7 @@ def check_retry_times(information: list):
 
                 else:
                     for i in information:
-    
+
                         v = data_dic.get(i)
                         if v is not None:
                             if v <= 2:
