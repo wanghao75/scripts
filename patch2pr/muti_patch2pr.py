@@ -1,4 +1,5 @@
 import base64
+import json
 import re
 import time
 import requests
@@ -743,6 +744,86 @@ def rewrite_to_project_series_file(data_list):
     with open("/home/patches/project_series.txt", "a", encoding="utf-8") as f:
         for d in data_list:
             f.writelines(d)
+
+
+def notice_dropped_patches_sender(data_string: str):
+    series_id = data_string.split(":")[2]
+
+    # open database connect
+    user = os.getenv("DATABASE_USER")
+    name = os.getenv("DATABASE_NAME")
+    password = os.getenv("DATABASE_PASSWORD")
+    host = os.getenv("DATABASE_HOST")
+
+    conn = psycopg2.connect(database=name, user=user, password=password, host=host, port="5432")
+
+    cur = conn.cursor()
+
+    cur.execute("SELECT msgid, submitter_id, headers from patchwork_patch where series_id={}".format(series_id))
+    patch_data = cur.fetchall()
+    msgid, submitter_id, header = patch_data[0][0], patch_data[0][1], patch_data[0][2]
+
+    archived_link = email.message_from_string(header).get("Archived-At").replace("<", "").replace(">", "")
+    mailing_list = archived_link.split("/list/")[1].split("/message/")[0]
+
+    cur.execute("SELECT email FROM patchwork_person where id={}".format(submitter_id))
+    submitter_email = cur.fetchall()[0][0]
+
+    zh_reason = "重试三次后任无法创建PR，因此丢弃此补丁/补丁集"
+    zh_suggest = "请确认补丁是否存在问题或者漏发，无误后重新发送至邮件列表"
+    en_reason = "bot can not create PR after tried three times, so bot drop this patch(es)"
+    en_suggest = "please checkout if something is wrong with your patches or you have missed some patches, " \
+                 "you can send to mailing list again after you have checked"
+    content = PR_FAILED.format(
+        mailing_list, archived_link, zh_reason, zh_suggest, mailing_list, archived_link, en_reason, en_suggest
+    )
+    
+    repo = data_string.split(":")[1].split("-")[0] + "/" + data_string.split(":")[1].split("-")[1]
+
+    send_mail_to_notice_developers(
+        content, [submitter_email], [], "", msgid, repo
+    )
+
+
+def check_retry_times(information: list):
+    patch_to_retry_list = []
+
+    with open("/home/patches/check.json", "r", encoding="utf-8") as f:
+        d = f.readlines()
+        if len(d) == 0:
+            dic = {}
+            if len(information) == 0:
+                return []
+            for i in information:
+                dic[i] = 0
+            with open("/home/patches/check.json", "w", encoding="utf-8") as ff:
+                json.dump(dic, ff)
+
+        else:
+            data_dic = json.loads("".join(d))
+            write_to_json_dic = {}
+            if len(information) == 0:
+                for k, v in data_dic.items():
+                    write_to_json_dic[k] = v + 1
+
+            else:
+                for i in information:
+
+                    v = data_dic.get(i)
+                    if v is not None:
+                        if v <= 2:
+                            write_to_json_dic[i] = data_dic.get(i) + 1
+                            patch_to_retry_list.append(i)
+                        else:
+                            notice_dropped_patches_sender(i)
+                    else:
+                        write_to_json_dic[i] = 0
+                        patch_to_retry_list.append(i)
+
+            with open("/home/patches/check.json", "w", encoding="utf-8") as fw:
+                json.dump(write_to_json_dic, fw)
+
+            return patch_to_retry_list
 
 
 def main():
