@@ -759,7 +759,7 @@ def notice_dropped_patches_sender(data_string: str):
 
     cur = conn.cursor()
 
-    cur.execute("SELECT msgid, submitter_id, headers from patchwork_patch where series_id={}".format(series_id))
+    cur.execute("SELECT msgid, submitter_id, headers from patchwork_patch where series_id={} LIMIT 1".format(series_id))
     patch_data = cur.fetchall()
     msgid, submitter_id, header = patch_data[0][0], patch_data[0][1], patch_data[0][2]
 
