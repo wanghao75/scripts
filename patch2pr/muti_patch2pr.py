@@ -762,7 +762,11 @@ def notice_dropped_patches_sender(data_string: str):
     cur.execute("SELECT msgid, submitter_id, headers from patchwork_patch where series_id={} LIMIT 1".format(series_id))
     patch_data = cur.fetchall()
     msgid, submitter_id, header = patch_data[0][0], patch_data[0][1], patch_data[0][2]
-
+    
+    print("headers \n", header, "\nheaders\n")
+    print("submitter_id \n", header, "\nsubmitter_id\n")
+    print("msgid \n", header, "\nmsgid\n")
+    
     archived_link = email.message_from_string(header).get("Archived-At").replace("<", "").replace(">", "")
     mailing_list = archived_link.split("/list/")[1].split("/message/")[0]
 
