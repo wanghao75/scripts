@@ -796,8 +796,11 @@ def check_retry_times(information: list):
                 return []
             for i in information:
                 dic[i] = 0
+                patch_to_retry_list.append(i)
             with open("/home/patches/check.json", "w", encoding="utf-8") as ff:
                 json.dump(dic, ff)
+            
+            return patch_to_retry_list
 
         else:
             data_dic = json.loads("".join(d))
@@ -807,18 +810,22 @@ def check_retry_times(information: list):
                     write_to_json_dic[k] = v + 1
 
             else:
-                for i in information:
+                if len(information) == 0:
+                    return []
 
-                    v = data_dic.get(i)
-                    if v is not None:
-                        if v <= 2:
-                            write_to_json_dic[i] = data_dic.get(i) + 1
-                            patch_to_retry_list.append(i)
+                else:
+                    for i in information:
+    
+                        v = data_dic.get(i)
+                        if v is not None:
+                            if v <= 2:
+                                write_to_json_dic[i] = data_dic.get(i) + 1
+                                patch_to_retry_list.append(i)
+                            else:
+                                notice_dropped_patches_sender(i)
                         else:
-                            notice_dropped_patches_sender(i)
-                    else:
-                        write_to_json_dic[i] = 0
-                        patch_to_retry_list.append(i)
+                            write_to_json_dic[i] = 0
+                            patch_to_retry_list.append(i)
 
             with open("/home/patches/check.json", "w", encoding="utf-8") as fw:
                 json.dump(write_to_json_dic, fw)
