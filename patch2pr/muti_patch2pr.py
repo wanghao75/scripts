@@ -777,7 +777,7 @@ def notice_dropped_patches_sender(data_string: str):
     content = PR_FAILED.format(
         mailing_list, archived_link, zh_reason, zh_suggest, mailing_list, archived_link, en_reason, en_suggest
     )
-    
+
     repo = data_string.split(":")[1].split("-")[0] + "/" + data_string.split(":")[1].split("-")[1]
 
     send_mail_to_notice_developers(
@@ -988,6 +988,7 @@ def main():
             continue
 
     if len(infor_data) != 0:
+        infor_data = check_retry_times(infor_data)
         rewrite_to_project_series_file(infor_data)
     else:
         os.remove("/home/patches/project_series.txt")
