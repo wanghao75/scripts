@@ -462,6 +462,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                 break
 
         # deal with body
+        print("\n\n\n\n%s\n\n\n\n" % patches_headers_name_rows[0][2])
         patch_content = patches_headers_name_rows[0][2].split("---")[-2].split("\n")
         body_list = []
         for c in patch_content:
@@ -679,7 +680,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
             continue
         else:
             body += ct + "\n"
-    
+
     print("***************cover body:\n %s \n****************" % body)
     # config git
     config_git(patch_sender_email, patch_send_name)
