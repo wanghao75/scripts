@@ -473,7 +473,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                 continue
             body_list.append(c + '\n')
         body = "".join(body_list)
-    
+        print("***************patch body:\n %s \n****************" % body)
+
         who_is_email_list = ""
 
         # new code using email
@@ -678,7 +679,8 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
             continue
         else:
             body += ct + "\n"
-
+    
+    print("***************cover body:\n %s \n****************" % body)
     # config git
     config_git(patch_sender_email, patch_send_name)
 
