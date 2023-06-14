@@ -453,14 +453,27 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                     first_path_mail_name = row[0]
 
         cur.execute(
-            "SELECT headers, name from patchwork_patch where series_id={}".format(ser_id))
+            "SELECT headers, name, content from patchwork_patch where series_id={}".format(ser_id))
         patches_headers_name_rows = cur.fetchall()
         patches_headers_rows = []
         for i in patches_headers_name_rows:
             if i[1] == first_path_mail_name:
                 patches_headers_rows.append(i)
                 break
-                
+
+        # deal with body
+        patch_content = patches_headers_name_rows[0][2].split("---")[-2].split("\n")
+        body_list = []
+        for c in patch_content:
+            if c.startswith("-"):
+                continue
+            if c.split(":")[0] in ["Signed-off-by", "Link", "Cc", "Reviewed-by", "Tested-by", "Reported-by"]:
+                continue
+            if c == "":
+                continue
+            body_list.append(c + '\n')
+        body = "".join(body_list)
+    
         who_is_email_list = ""
 
         # new code using email
@@ -469,7 +482,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         email_to = email_msg.get("To").replace("\n\t", "")
         if "," in email_to:
             email_list = email_to.split(",")
-            print("email_list === ", email_list)
             for e in email_list:
                 if "<" in e and ">" in e:
                     if e.split("<")[1].split(">")[0] in MAILING_LIST:
@@ -479,7 +491,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                         who_is_email_list = e
         else:
             e = email_to
-            print("UP@@@@@@@@@@@@@@@@@   ", e, "@@@@@@@@@@@@@@@@")
             if "<" in e and ">" in e:
                 if e.split("<")[1].split(">")[0] in MAILING_LIST:
                     who_is_email_list = e.split("<")[1].split(">")[0]
@@ -547,9 +558,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         #             msg_id = string.split("Message-ID: ")[1]
         cc.append(who_is_email_list)
 
-        print("&&&&&&&&&&&&&&&&&&&&&&&&&&\n", committer, patch_sender_email, patch_send_name, who_is_email_list,
-              msg_id, email_list_link_of_patch, "\n&&&&&&&&&&&&&&&&&&&&&&&&&")
-
         if "1/" in first_path_mail_name:
             zh_reason = "补丁集缺失封面信息"
             zh_suggest = "请提供补丁集并重新发送您的补丁集到邮件列表"
@@ -594,7 +602,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     email_to = email_msg.get("To").replace("\n\t", "")
     if "," in email_to:
         email_list = email_to.split(",")
-        print("@@@@@@@@@@@@@@@@@   ", email_list, "@@@@@@@@@@@@@@@@")
         for e in email_list:
             if "<" in e and ">" in e:
                 if e.split("<")[1].split(">")[0] in MAILING_LIST:
@@ -604,7 +611,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                     cover_who_is_email_list = e
     else:
         e = email_to
-        print("@@@@@@@@@@@@@@@@@   ", e, "@@@@@@@@@@@@@@@@")
         if "<" in e and ">" in e:
             if e.split("<")[1].split(">")[0] in MAILING_LIST:
                 cover_who_is_email_list = e.split("<")[1].split(">")[0]
@@ -639,9 +645,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
     # deal with Archived-at
     # email_list_link_of_patch = email_msg.get("Archived-At").replace(" ", "").replace("\n", "")
 
-    print("$$$$$$$$$$$$$$$$$$$$$$\n", committer, patch_sender_email, patch_send_name, cover_who_is_email_list,
-          msg_id, email_list_link_of_patch, "\n$$$$$$$$$$$$$$$$$$$")
-
     # for idx, ch in enumerate(cover_data):
     #     if ch.startswith("Message-Id: "):
     #         msg_id = ch.split("Message-Id: ")[1]
@@ -674,12 +677,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         if ct.__contains__("(+)") or ct.__contains__("(-)") or "mode" in ct or "| " in ct:
             continue
         else:
-            cur.execute("select name from patchwork_patch where series_id={}".format(ser_id))
-            patch_number = cur.fetchall()
-            if len(patch_number) == 1:
-                body = ""
-            else:
-                body += ct + "\n"
+            body += ct + "\n"
 
     # config git
     config_git(patch_sender_email, patch_send_name)
@@ -836,7 +834,12 @@ def check_retry_times(information: list):
                                 write_to_json_dic[i] = data_dic.get(i) + 1
                                 patch_to_retry_list.append(i)
                             else:
-                                notice_dropped_patches_sender(i)
+                                try:
+                                    notice_dropped_patches_sender(i)
+                                except Exception as e:
+                                    print("notice developer the action of dropping patch(es) "
+                                          "from %s failed, reason: %s" % (i, e))
+                                    continue
                         else:
                             write_to_json_dic[i] = 0
                             patch_to_retry_list.append(i)
