@@ -463,6 +463,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
 
         # deal with body
         print("\n\n\n\n%s\n\n\n\n" % patches_headers_name_rows[0][2])
+        print("\n\n\n\n%s\n\n\n\n" % patches_headers_name_rows[0][2].split("---"))
         patch_content = patches_headers_name_rows[0][2].split("---")[-2].split("\n")
         body_list = []
         for c in patch_content:
