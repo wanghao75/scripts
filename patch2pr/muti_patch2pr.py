@@ -455,6 +455,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         cur.execute(
             "SELECT headers, name, content from patchwork_patch where series_id={}".format(ser_id))
         patches_headers_name_rows = cur.fetchall()
+        print("patch_heeaedeer === \n", patches_headers_name_rows, "\n=====")
         patches_headers_rows = []
         for i in patches_headers_name_rows:
             if i[1] == first_path_mail_name:
