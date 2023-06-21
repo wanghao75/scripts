@@ -32,7 +32,7 @@ class Test(object):
             mc = re.compile(r'(by )\d+( commits)')
             for s in status:
                 if mc.search(s):
-                    patch_num = s.split("by")[1].split("commits")[0].strip(" ")
+                    patch_num = int(s.split("by")[1].split("commits")[0].strip(" "))
                     break
 
         if patch_num == 0:
@@ -72,7 +72,7 @@ class Test(object):
             mc = re.compile(r'(by )\d+( commits)')
             for s in status:
                 if mc.search(s):
-                    patch_num = s.split("by")[1].split("commits")[0].strip(" ")
+                    patch_num = int(s.split("by")[1].split("commits")[0].strip(" "))
                     break
 
         if patch_num == 0:
@@ -114,7 +114,7 @@ class Test(object):
             mc = re.compile(r'(by )\d+( commits)')
             for s in status:
                 if mc.search(s):
-                    patch_num = s.split("by")[1].split("commits")[0].strip(" ")
+                    patch_num = int(s.split("by")[1].split("commits")[0].strip(" "))
                     break
 
         if patch_num == 0:
