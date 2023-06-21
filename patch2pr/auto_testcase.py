@@ -1,6 +1,5 @@
 import os
 import re
-import unittest
 import time
 
 
@@ -139,64 +138,59 @@ class Test(object):
         return True
 
 
-class AutoTest(unittest.TestCase):
-
-    def setUp(self) -> None:
-        self.test_case = Test()
+def main():
+    t = Test()
 
     # same patch(es), one have a cover, another don't have
-    def test_case_1(self):
-        self.assertTrue(self.test_case.case_1(
-            "wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-            "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1"), True)
+    pass1 = t.case_1("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
+                     "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1")
+    
+    if not pass1:
+        print("case1 failed")
 
-    def test_case_2(self):
-        self.assertTrue(self.test_case.case_2(
-            "wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-            "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1", ""), True)
+    pass2 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
+                     "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1", "")
+    
+    if not pass2:
+        print("case2 failed")
 
     # do not send all patches, test retry 3 times, then drop ths patch(es)
-    def test_case_3(self):
-        self.assertTrue(self.test_case.case_3(
-            "wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-            "openEuler-22.03-LTS-SP1", "v5.10.163..v5.10.164~1"), True)
+    pass3 = t.case_3("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
+                     "openEuler-22.03-LTS-SP1", "v5.10.163..v5.10.164~1")
+    
+    if not pass3:
+        print("case3 failed")
 
     # another way to provide the email address
-    def test_case_4(self):
-        self.assertTrue(self.test_case.case_2(
-            "2467577789@qq.com,wanghaosqsq@163.com", "wanghaosqsq@gmail.com",
-            "openEuler-22.03-LTS-SP2", "v5.10.173..v5.10.174~1", ""), True)
+    pass4 = t.case_2("2467577789@qq.com,wanghaosqsq@163.com", "wanghaosqsq@gmail.com", 
+                     "openEuler-22.03-LTS-SP2", "v5.10.173..v5.10.174~1", "")
+    
+    if not pass4:
+        print("case4 failed")
 
     # patch(es) with version
-    def test_case_5(self):
-        self.assertTrue(self.test_case.case_2(
-            "wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-            "openEuler-22.03-LTS", "v5.10.170..v5.10.171~1", "v2"), True)
+    pass5 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>", 
+                     "openEuler-22.03-LTS", "v5.10.170..v5.10.171~1", "v2")
+    if not pass5:
+        print("case5 failed")
 
     # apply patch failed because of patch is wrong
-    def test_case_6(self):
-        self.assertTrue(self.test_case.case_4(
-            "wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",), True)
+    pass6 = t.case_4("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",) 
+    if not pass6:
+        print("case6 failed")
 
     # illegal branch
-    def test_case_7(self):
-        self.assertTrue(self.test_case.case_2(
-            "wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-            "openEuler-1.0-LTS", "v5.10.173..v5.10.174~1", ""), True)
+    pass7 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
+                     "openEuler-1.0-LTS", "v5.10.173..v5.10.174~1", "")
+    if not pass7:
+        print("case7 failed")
 
     # a big series of patches
-    def test_case_8(self):
-        self.assertTrue(self.test_case.case_2(
-            "wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-            "openEuler-22.03-LTS", "v5.10.172..v5.10.173~1", ""), True)
-
-    #
-    def test_case_9(self):
-        pass
-
-    def tearDown(self) -> None:
-        del self.test_case
-
+    pass8 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
+                     "openEuler-22.03-LTS", "v5.10.172..v5.10.173~1", "")
+    if not pass8:
+        print("case8 failed")
+        
 
 if __name__ == '__main__':
-    unittest.main()
+    main()
