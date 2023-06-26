@@ -29,9 +29,13 @@ class Test(object):
         if stop:
             status = os.popen("git status").readlines()
             mc = re.compile(r'(by )\d+( commits)')
+            mc2 = re.compile(r'(by )\d+( commit)')
             for s in status:
                 if mc.search(s):
                     patch_num = int(s.split("by")[1].split("commits")[0].strip(" "))
+                    break
+                if mc2.search(s):
+                    patch_num = int(s.split("by")[1].split("commit")[0].strip(" "))
                     break
 
         if patch_num == 0:
@@ -70,9 +74,13 @@ class Test(object):
         if stop:
             status = os.popen("git status").readlines()
             mc = re.compile(r'(by )\d+( commits)')
+            mc2 = re.compile(r'(by )\d+( commit)')
             for s in status:
                 if mc.search(s):
                     patch_num = int(s.split("by")[1].split("commits")[0].strip(" "))
+                    break
+                if mc2.search(s):
+                    patch_num = int(s.split("by")[1].split("commit")[0].strip(" "))
                     break
 
         if patch_num == 0:
@@ -112,9 +120,13 @@ class Test(object):
         if stop:
             status = os.popen("git status").readlines()
             mc = re.compile(r'(by )\d+( commits)')
+            mc2 = re.compile(r'(by )\d+( commit)')
             for s in status:
                 if mc.search(s):
                     patch_num = int(s.split("by")[1].split("commits")[0].strip(" "))
+                    break
+                if mc2.search(s):
+                    patch_num = int(s.split("by")[1].split("commit")[0].strip(" "))
                     break
 
         if patch_num == 0:
