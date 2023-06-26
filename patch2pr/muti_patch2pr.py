@@ -455,7 +455,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         cur.execute(
             "SELECT headers, name, content from patchwork_patch where series_id={}".format(ser_id))
         patches_headers_name_rows = cur.fetchall()
-        print("patch_heeaedeer === \n", patches_headers_name_rows[0][2], "\n=====")
         patches_headers_rows = []
         for i in patches_headers_name_rows:
             if i[1] == first_path_mail_name:
@@ -463,8 +462,7 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                 break
 
         # deal with body
-        print("\n\n\n\n%s\n\n\n\n" % patches_headers_name_rows[0][2])
-        print("\n\n\n\n%s\n\n\n\n" % patches_headers_name_rows[0][2].split("---"))
+
         patch_content = patches_headers_name_rows[0][2].split("---")[-2].split("\n")
         body_list = []
         for c in patch_content:
@@ -683,7 +681,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
         else:
             body += ct + "\n"
 
-    print("***************cover body:\n %s \n****************" % body)
     # config git
     config_git(patch_sender_email, patch_send_name)
 
@@ -771,10 +768,6 @@ def notice_dropped_patches_sender(data_string: str):
     cur.execute("SELECT msgid, submitter_id, headers from patchwork_patch where series_id={} LIMIT 1".format(series_id))
     patch_data = cur.fetchall()
     msgid, submitter_id, header = patch_data[0][0], patch_data[0][1], patch_data[0][2]
-
-    print("headers \n", header, "\nheaders\n")
-    print("submitter_id \n", submitter_id, "\nsubmitter_id\n")
-    print("msgid \n", msgid, "\nmsgid\n")
 
     #archived_link = email.message_from_string(header).get("Archived-At").replace("<", "").replace(">", "")
     #mailing_list = archived_link.split("/list/")[1].split("/message/")[0]
