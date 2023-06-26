@@ -16,9 +16,9 @@ class Test(object):
         """
         complete = False
         os.chdir("/root/linux-git/kernel")
-        os.popen("rm -f *.patch && git pull").readlines()
+        os.popen("rm -f *.patch").readlines()
         test_branch = "case-%d" % int(time.time())
-        os.popen("git checkout -b %s origin/%s" % (test_branch, branch)).readlines()
+        os.popen("git checkout -f -b %s origin/%s" % (test_branch, branch)).readlines()
         cherry_result = os.popen("git cherry-pick --abort;git cherry-pick %s -s" % tag).readlines()
         stop = False
         for r in cherry_result:
@@ -38,7 +38,8 @@ class Test(object):
             return complete
 
         os.popen('git format-patch -%d --subject-prefix="PATCH %s"' % (patch_num, branch))
-        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all' % (to_list, cc_list)).readlines()
+        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' %
+                 (to_list, cc_list)).readlines()
         os.popen("git cherry-pick --abort")
         complete = True
 
@@ -56,9 +57,9 @@ class Test(object):
         """
         complete = False
         os.chdir("/root/linux-git/kernel")
-        os.popen("rm -f *.patch && git pull").readlines()
+        os.popen("rm -f *.patch").readlines()
         test_branch = "case-%d" % int(time.time())
-        os.popen("git checkout -b %s origin/%s" % (test_branch, branch)).readlines()
+        os.popen("git checkout -f -b %s origin/%s" % (test_branch, branch)).readlines()
         cherry_result = os.popen("git cherry-pick --abort;git cherry-pick %s -s" % tag).readlines()
         stop = False
         for r in cherry_result:
@@ -81,7 +82,7 @@ class Test(object):
             os.popen('git format-patch -%d --subject-prefix="PATCH %s" --cover-letter' % (patch_num, branch))
         else:
             os.popen('git format-patch -%d --subject-prefix="PATCH %s %s" --cover-letter' % (patch_num, version, branch))
-        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all' % (to_list, cc_list)).readlines()
+        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' % (to_list, cc_list)).readlines()
         os.popen("git cherry-pick --abort")
         complete = True
 
@@ -98,9 +99,9 @@ class Test(object):
         """
         complete = False
         os.chdir("/root/linux-git/kernel")
-        os.popen("rm -f *.patch && git pull").readlines()
+        os.popen("rm -f *.patch").readlines()
         test_branch = "case-%d" % int(time.time())
-        os.popen("git checkout -b %s origin/%s" % (test_branch, branch)).readlines()
+        os.popen("git checkout -f -b %s origin/%s" % (test_branch, branch)).readlines()
         cherry_result = os.popen("git cherry-pick --abort;git cherry-pick %s -s" % tag).readlines()
         stop = False
         for r in cherry_result:
@@ -123,7 +124,7 @@ class Test(object):
         l = os.popen("ls").readlines()
         for num, ll in enumerate(l):
             if ll.strip("\n").endswith(".patch"):
-                os.popen('git send-email %s --to "%s" --cc "%s" --suppress-cc=all' %
+                os.popen('git send-email %s --to "%s" --cc "%s" --suppress-cc=all --force' %
                          (ll.strip("\n"), to_list, cc_list)).readlines()
                 if num >= 3:
                     break
@@ -134,7 +135,7 @@ class Test(object):
 
     def case_4(self, to_list: str, cc_list: str):
         os.chdir("/root/linux-git/k1")
-        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all' % (to_list, cc_list))
+        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' % (to_list, cc_list))
         return True
 
 
@@ -144,38 +145,38 @@ def main():
     # same patch(es), one have a cover, another don't have
     pass1 = t.case_1("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
                      "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1")
-    
+
     if not pass1:
         print("case1 failed")
 
     pass2 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
                      "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1", "")
-    
+
     if not pass2:
         print("case2 failed")
 
     # do not send all patches, test retry 3 times, then drop ths patch(es)
     pass3 = t.case_3("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
                      "openEuler-22.03-LTS-SP1", "v5.10.163..v5.10.164~1")
-    
+
     if not pass3:
         print("case3 failed")
 
     # another way to provide the email address
-    pass4 = t.case_2("2467577789@qq.com,wanghaosqsq@163.com", "wanghaosqsq@gmail.com", 
+    pass4 = t.case_2("2467577789@qq.com,wanghaosqsq@163.com", "wanghaosqsq@gmail.com",
                      "openEuler-22.03-LTS-SP2", "v5.10.173..v5.10.174~1", "")
-    
+
     if not pass4:
         print("case4 failed")
 
     # patch(es) with version
-    pass5 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>", 
+    pass5 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
                      "openEuler-22.03-LTS", "v5.10.170..v5.10.171~1", "v2")
     if not pass5:
         print("case5 failed")
 
     # apply patch failed because of patch is wrong
-    pass6 = t.case_4("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",) 
+    pass6 = t.case_4("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",)
     if not pass6:
         print("case6 failed")
 
@@ -185,12 +186,12 @@ def main():
     if not pass7:
         print("case7 failed")
 
-    # a big series of patches
+    # a big series of patches (simple one)
     pass8 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-                     "openEuler-22.03-LTS", "v5.10.172..v5.10.173~1", "")
+                     "openEuler-22.03-LTS", "v5.10.176..v5.10.177~1", "")
     if not pass8:
         print("case8 failed")
-        
+
 
 if __name__ == '__main__':
     main()
