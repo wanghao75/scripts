@@ -181,7 +181,7 @@ def main():
 
     # another way to provide the email address
     pass4 = t.case_2("2467577789@qq.com,wanghaosqsq@163.com", "wanghaosqsq@gmail.com",
-                     "openEuler-22.03-LTS-SP1", "v5.10.173..v5.10.174~1", "")
+                     "openEuler-22.03-LTS-SP1", "v5.10.170..v5.10.171~1", "")
 
     if not pass4:
         print("case4 failed")
@@ -199,7 +199,7 @@ def main():
 
     # illegal branch
     pass7 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-                     "openEuler-1.0-LTS", "v5.10.173..v5.10.174~1", "")
+                     "openEuler-1.0-LTS", "v5.10.170..v5.10.171~1", "")
     if not pass7:
         print("case7 failed")
 
