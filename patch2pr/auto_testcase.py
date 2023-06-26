@@ -91,7 +91,7 @@ class Test(object):
         if version == "":
             os.popen('git format-patch -%d --subject-prefix="PATCH %s" --cover-letter' % (patch_num, branch)).readlines()
         else:
-            os.popen('git format-patch -%d --subject-prefix="PATCH %s %s" --cover-letter' % 
+            os.popen('git format-patch -%d --subject-prefix="PATCH %s %s" --cover-letter' %
                      (patch_num, version, branch)).readlines()
         os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' % (to_list, cc_list)).readlines()
         os.popen("git cherry-pick --abort").readlines()
@@ -161,27 +161,27 @@ def main():
 
     # same patch(es), one have a cover, another don't have
     pass1 = t.case_1("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-                     "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1")
+                     "openEuler-22.03-LTS-SP1", "v5.10.170..v5.10.171~1")
 
     if not pass1:
         print("case1 failed")
 
     pass2 = t.case_2("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-                     "openEuler-22.03-LTS-SP2", "v5.10.170..v5.10.171~1", "")
+                     "openEuler-22.03-LTS-SP1", "v5.10.170..v5.10.171~1", "")
 
     if not pass2:
         print("case2 failed")
 
     # do not send all patches, test retry 3 times, then drop ths patch(es)
     pass3 = t.case_3("wang hao <2467577789@qq.com>,WANG QIAN <wanghaosqsq@163.com>", "W H <wanghaosqsq@gmail.com>",
-                     "openEuler-22.03-LTS-SP1", "v5.10.163..v5.10.164~1")
+                     "openEuler-22.03-LTS-SP1", "v5.10.170..v5.10.171~1")
 
     if not pass3:
         print("case3 failed")
 
     # another way to provide the email address
     pass4 = t.case_2("2467577789@qq.com,wanghaosqsq@163.com", "wanghaosqsq@gmail.com",
-                     "openEuler-22.03-LTS-SP2", "v5.10.173..v5.10.174~1", "")
+                     "openEuler-22.03-LTS-SP1", "v5.10.173..v5.10.174~1", "")
 
     if not pass4:
         print("case4 failed")
