@@ -19,7 +19,8 @@ class Test(object):
         os.popen("rm -f *.patch").readlines()
         test_branch = "case-%d" % int(time.time())
         os.popen("git checkout -f -b %s origin/%s" % (test_branch, branch)).readlines()
-        cherry_result = os.popen("git cherry-pick --abort;git cherry-pick %s -s" % tag).readlines()
+        os.popen("git cherry-pick --abort").readlines()
+        cherry_result = os.popen("git cherry-pick %s -s" % tag).readlines()
         stop = False
         for r in cherry_result:
             if "Merge conflict" in r or "git cherry-pick --skip" in r:
@@ -41,10 +42,10 @@ class Test(object):
         if patch_num == 0:
             return complete
 
-        os.popen('git format-patch -%d --subject-prefix="PATCH %s"' % (patch_num, branch))
+        os.popen('git format-patch -%d --subject-prefix="PATCH %s"' % (patch_num, branch)).readlines()
         os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' %
                  (to_list, cc_list)).readlines()
-        os.popen("git cherry-pick --abort")
+        os.popen("git cherry-pick --abort").readlines()
         complete = True
 
         return complete
@@ -64,7 +65,8 @@ class Test(object):
         os.popen("rm -f *.patch").readlines()
         test_branch = "case-%d" % int(time.time())
         os.popen("git checkout -f -b %s origin/%s" % (test_branch, branch)).readlines()
-        cherry_result = os.popen("git cherry-pick --abort;git cherry-pick %s -s" % tag).readlines()
+        os.popen("git cherry-pick --abort").readlines()
+        cherry_result = os.popen("git cherry-pick %s -s" % tag).readlines()
         stop = False
         for r in cherry_result:
             if "Merge conflict" in r or "git cherry-pick --skip" in r:
@@ -87,11 +89,12 @@ class Test(object):
             return complete
 
         if version == "":
-            os.popen('git format-patch -%d --subject-prefix="PATCH %s" --cover-letter' % (patch_num, branch))
+            os.popen('git format-patch -%d --subject-prefix="PATCH %s" --cover-letter' % (patch_num, branch)).readlines()
         else:
-            os.popen('git format-patch -%d --subject-prefix="PATCH %s %s" --cover-letter' % (patch_num, version, branch))
+            os.popen('git format-patch -%d --subject-prefix="PATCH %s %s" --cover-letter' % 
+                     (patch_num, version, branch)).readlines()
         os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' % (to_list, cc_list)).readlines()
-        os.popen("git cherry-pick --abort")
+        os.popen("git cherry-pick --abort").readlines()
         complete = True
 
         return complete
@@ -110,7 +113,8 @@ class Test(object):
         os.popen("rm -f *.patch").readlines()
         test_branch = "case-%d" % int(time.time())
         os.popen("git checkout -f -b %s origin/%s" % (test_branch, branch)).readlines()
-        cherry_result = os.popen("git cherry-pick --abort;git cherry-pick %s -s" % tag).readlines()
+        os.popen("git cherry-pick --abort").readlines()
+        cherry_result = os.popen("git cherry-pick %s -s" % tag).readlines()
         stop = False
         for r in cherry_result:
             if "Merge conflict" in r or "git cherry-pick --skip" in r:
@@ -132,7 +136,7 @@ class Test(object):
         if patch_num == 0:
             return complete
 
-        os.popen('git format-patch -%d --subject-prefix="PATCH %s" --cover-letter' % (patch_num, branch))
+        os.popen('git format-patch -%d --subject-prefix="PATCH %s" --cover-letter' % (patch_num, branch)).readlines()
         l = os.popen("ls").readlines()
         for num, ll in enumerate(l):
             if ll.strip("\n").endswith(".patch"):
@@ -140,14 +144,15 @@ class Test(object):
                          (ll.strip("\n"), to_list, cc_list)).readlines()
                 if num >= 3:
                     break
-        os.popen("git cherry-pick --abort")
+        os.popen("git cherry-pick --abort").readlines()
         complete = True
 
         return complete
 
     def case_4(self, to_list: str, cc_list: str):
         os.chdir("/root/linux-git/k1")
-        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' % (to_list, cc_list))
+        os.popen('git send-email *.patch --to "%s" --cc "%s" --suppress-cc=all --force' %
+                 (to_list, cc_list)).readlines()
         return True
 
 
