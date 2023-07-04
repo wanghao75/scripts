@@ -50,4 +50,4 @@ mapping:
       host: "OPENEULER_KERNEL_HOST"
       pass: "OPENEULER_KERNEL_PASS"
     branches:
-      "master": "master"
+      "wanghao": "wanghao"
