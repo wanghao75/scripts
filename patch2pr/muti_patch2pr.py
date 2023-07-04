@@ -81,7 +81,8 @@ def make_fork_same_with_origin(branch_name, o, r):
     fork_branches_list = os.popen("git branch -a").readlines()
     create_to_fork = False
     for fb in fork_branches_list:
-        if not fb.strip("\n").strip(" ").__contains__(branch_name):
+        if fb.strip("\n").strip(" ").split("/")[-1] != branch_name:
+            print("not match, ", fb.strip("\n").strip(" ").split("/")[-1], branch_name)
             create_to_fork = True
         else:
             create_to_fork = False
