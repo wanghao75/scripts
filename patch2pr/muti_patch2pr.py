@@ -164,6 +164,7 @@ def un_config_git():
 
 
 def config_get_mail(rc_path, u_name, u_pass, email_server, path_of_sh):
+
     file_path = "{}/getmailrc".format(rc_path)
     if os.path.exists(file_path):
         with open("{}/getmailrc".format(rc_path), "r", encoding="utf-8") as ff:
@@ -930,6 +931,7 @@ def main():
 
         # use patches
         target_branch = BRANCHES_MAP.get(repo).get(branch)
+        print(BRANCHES_MAP.get(repo))
         branch_not_match = False
         if target_branch is None:
             branch_not_match = True
