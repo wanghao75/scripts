@@ -91,7 +91,7 @@ def make_fork_same_with_origin(branch_name, o, r):
     if create_to_fork:
         # create branch to fork repo
         os.popen("git fetch upstream %s" % branch_name).readlines()
-        os.popen("git checkout -b %s upstream/%s" % (branch_name, branch_name)).readlines()
+        os.popen("git checkout -b %s --track upstream/%s" % (branch_name, branch_name)).readlines()
         os.popen("git push -u origin %s" % branch_name).readlines()
 
         same_flag = True
