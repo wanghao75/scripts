@@ -1,4 +1,4 @@
-import base64
+import yaml
 import json
 import re
 import time
@@ -13,54 +13,26 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from textwrap import dedent
 
-BRANCHES_MAP = {
-    "src-openeuler/kernel": {
-        'build-5.10-rc': 'build-5.10-rc',
-        'master': 'master',
-        'openEuler-20.03-LTS': 'openEuler-20.03-LTS',
-        'openEuler-20.03-LTS-Next': 'openEuler-20.03-LTS-Next',
-        'openEuler-20.03-LTS-SP1': 'openEuler-20.03-LTS-SP1',
-        'openEuler-20.03-LTS-SP1-testing': 'openEuler-20.03-LTS-SP1-testing',
-        'openEuler-20.03-LTS-SP2': 'openEuler-20.03-LTS-SP2',
-        'openEuler-20.03-LTS-SP3': 'openEuler-20.03-LTS-SP3',
-        'openEuler-20.09': 'openEuler-20.09',
-        'openEuler-21.03': 'openEuler-21.03',
-        'openEuler-21.09': 'openEuler-21.09',
-        'openEuler-22.03-LTS': 'openEuler-22.03-LTS',
-        'openEuler-22.03-LTS-LoongArch': 'openEuler-22.03-LTS-LoongArch',
-        'openEuler-22.03-LTS-Next': 'openEuler-22.03-LTS-Next',
-        'openEuler-22.03-LTS-SP1': 'openEuler-22.03-LTS-SP1',
-        'openEuler-22.09': 'openEuler-22.09',
-        'openEuler-22.09-HeXin': 'openEuler-22.09-HeXin',
-        'openEuler-23.03': 'openEuler-23.03',
-        'openEuler1.0': 'openEuler1.0',
-        'openEuler1.0-base': 'openEuler1.0-base'
-    },
-    "openeuler/kernel": {
-        "master": "master",
-        "openEuler-1.0-LTS": "openEuler-1.0-LTS",
-        "openEuler-22.03-LTS-SP1": "openEuler-22.03-LTS-SP1",
-        "OLK-5.10": "OLK-5.10",
-        "openEuler-22.03-LTS": "openEuler-22.03-LTS",
-        "openEuler-22.09": "openEuler-22.09",
-        "devel-6.1": "devel-6.1",
-        "openEuler-22.03-LTS-Ascend": "openEuler-22.03-LTS-Ascend",
-        "openEuler-22.09-HCK": "openEuler-22.09-HCK",
-        "openEuler-20.03-LTS-SP3": "openEuler-20.03-LTS-SP3",
-        "openEuler-21.09": "openEuler-21.09",
-        "openEuler-21.03": "openEuler-21.03",
-        "openEuler-20.09": "openEuler-20.09",
-    }
-}
+BRANCHES_MAP = {}
 
 # map of getmailrc file path, host and pass
-RCFile_MAP = {
-    "/home/patches/rc/src-openeuler/kernel": {"host": "SRC_OPENEULER_KERNEL_HOST", "pass": "SRC_OPENEULER_KERNEL_PASS"},
-    "/home/patches/rc/openeuler/kernel": {"host": "OPENEULER_KERNEL_HOST", "pass": "OPENEULER_KERNEL_PASS"}
-}
+RCFile_MAP = {}
 
-MAILING_LIST = ["kernel@openeuler.org", "kernel-build@openeuler.org", "wanghaosqsq@163.com"]
+MAILING_LIST = []
 
+
+# new code space
+def load_configuration():
+    with open('/home/patches/repositories_branches_map.yaml', "r", encoding="utf-8") as f:
+        d = yaml.safe_load(f.read())
+
+    for k, v in d.get("mapping").items():
+        BRANCHES_MAP[k] = v.get("branches")
+        RCFile_MAP["/home/patches/rc/" + k] = v.get("env")
+        MAILING_LIST.append(v.get("mailing-list"))
+
+
+# new code end
 PR_SUCCESS = "反馈：\n" \
              "您发送到{}的补丁/补丁集，已成功转换为PR！\n" \
              "PR链接地址： {}\n" \
@@ -474,7 +446,6 @@ def get_email_content_sender_and_covert_to_pr_body(ser_id, path_of_repo):
                 continue
             body_list.append(c + '\n')
         body = "".join(body_list)
-        print("***************patch body:\n %s \n****************" % body)
 
         who_is_email_list = ""
 
@@ -859,6 +830,9 @@ def main():
         print("args can not be empty")
         return
 
+    # load config by yaml
+    load_configuration()
+
     # config get-mail tools
     for k, v in RCFile_MAP.items():
         config_get_mail(k, v.get("host"), v.get("pass"), mail_server,
@@ -938,10 +912,10 @@ def main():
         branch_not_match = False
         if target_branch is None:
             branch_not_match = True
-        else:
-            if repo == "openeuler/kernel" \
-                    and target_branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
-                branch_not_match = True
+        # else:
+        #     if repo == "openeuler/kernel" \
+        #             and target_branch not in ["openEuler-22.03-LTS-SP1", "openEuler-22.03-LTS", "OLK-5.10"]:
+        #         branch_not_match = True
 
         if branch_not_match:
             print("branch is ", branch, "can not match any branches")
