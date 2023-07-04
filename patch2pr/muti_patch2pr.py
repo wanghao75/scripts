@@ -77,6 +77,25 @@ def make_fork_same_with_origin(branch_name, o, r):
         elif o == "openeuler":
             os.popen("git remote add upstream https://gitee.com/new-op/{}.git".format(r))
 
+    # list git branches by git branch -a
+    fork_branches_list = os.popen("git branch -a").readlines()
+    create_to_fork = False
+    for fb in fork_branches_list:
+        if not fb.strip("\n").strip(" ").__contains__(branch_name):
+            create_to_fork = True
+        else:
+            create_to_fork = False
+            break
+
+    if create_to_fork:
+        # create branch to fork repo
+        os.popen("git fetch upstream %s" % branch_name).readlines()
+        os.popen("git checkout -b %s upstream/%s" % (branch_name, branch_name)).readlines()
+        os.popen("git push -u origin %s" % branch_name).readlines()
+
+        same_flag = True
+        return same_flag
+
     if branch_name in ["openEuler-1.0-LTS", "master"]:
         os.popen("git checkout -f {}".format(branch_name)).readlines()
     else:
