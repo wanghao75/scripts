@@ -1,0 +1,53 @@
+mapping:
+  src-openeuler/kernel:
+    mailing-list: "kernel-build@openeuler.org"
+    env:
+      host: "SRC_OPENEULER_KERNEL_HOST"
+      pass: "SRC_OPENEULER_KERNEL_PASS"
+    branches:
+      'build-5.10-rc': 'build-5.10-rc'
+      'master': 'master'
+      'openEuler-20.03-LTS': 'openEuler-20.03-LTS'
+      'openEuler-20.03-LTS-Next': 'openEuler-20.03-LTS-Next'
+      'openEuler-20.03-LTS-SP1': 'openEuler-20.03-LTS-SP1'
+      'openEuler-20.03-LTS-SP1-testing': 'openEuler-20.03-LTS-SP1-testing'
+      'openEuler-20.03-LTS-SP2': 'openEuler-20.03-LTS-SP2'
+      'openEuler-20.03-LTS-SP3': 'openEuler-20.03-LTS-SP3'
+      'openEuler-20.09': 'openEuler-20.09'
+      'openEuler-21.03': 'openEuler-21.03'
+      'openEuler-21.09': 'openEuler-21.09'
+      'openEuler-22.03-LTS': 'openEuler-22.03-LTS'
+      'openEuler-22.03-LTS-LoongArch': 'openEuler-22.03-LTS-LoongArch'
+      'openEuler-22.03-LTS-Next': 'openEuler-22.03-LTS-Next'
+      'openEuler-22.03-LTS-SP1': 'openEuler-22.03-LTS-SP1'
+      'openEuler-22.09': 'openEuler-22.09'
+      'openEuler-22.09-HeXin': 'openEuler-22.09-HeXin'
+      'openEuler-23.03': 'openEuler-23.03'
+      'openEuler1.0': 'openEuler1.0'
+      'openEuler1.0-base': 'openEuler1.0-base'
+  openeuler/kernel:
+    mailing-list: "kernel@openeuler.org"
+    env:
+      host: "OPENEULER_KERNEL_HOST"
+      pass: "OPENEULER_KERNEL_PASS"
+    branches:
+      "master": "master"
+      "openEuler-1.0-LTS": "openEuler-1.0-LTS"
+      "openEuler-22.03-LTS-SP1": "openEuler-22.03-LTS-SP1"
+      "OLK-5.10": "OLK-5.10"
+      "openEuler-22.03-LTS": "openEuler-22.03-LTS"
+      "openEuler-22.09": "openEuler-22.09"
+      "devel-6.1": "devel-6.1"
+      "openEuler-22.03-LTS-Ascend": "openEuler-22.03-LTS-Ascend"
+      "openEuler-22.09-HCK": "openEuler-22.09-HCK"
+      "openEuler-20.03-LTS-SP3": "openEuler-20.03-LTS-SP3"
+      "openEuler-21.09": "openEuler-21.09"
+      "openEuler-21.03": "openEuler-21.03"
+      "openEuler-20.09": "openEuler-20.09"
+  openeuler/community:
+    mailing-list: "wanghaosqsq@163.com"
+    env:
+      host: "OPENEULER_KERNEL_HOST"
+      pass: "OPENEULER_KERNEL_PASS"
+    branches:
+      "master": "master"
