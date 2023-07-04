@@ -931,7 +931,8 @@ def main():
 
         # use patches
         target_branch = BRANCHES_MAP.get(repo).get(branch)
-        print(BRANCHES_MAP.get(repo))
+        print(BRANCHES_MAP)
+        print(repo, BRANCHES_MAP.get(repo))
         branch_not_match = False
         if target_branch is None:
             branch_not_match = True
