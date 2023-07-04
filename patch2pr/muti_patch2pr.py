@@ -144,6 +144,7 @@ def un_config_git():
 
 
 def config_get_mail(rc_path, u_name, u_pass, email_server, path_of_sh):
+    os.popen("mkdir -p %s" % rc_path).readlines()
     file_path = "{}/getmailrc".format(rc_path)
     if os.path.exists(file_path):
         with open("{}/getmailrc".format(rc_path), "r", encoding="utf-8") as ff:
