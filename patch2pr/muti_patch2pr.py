@@ -1014,6 +1014,7 @@ def main():
         os.remove("/home/patches/project_series.txt")
         # for v in RCFile_MAP.values():
         #     change_email_status_to_answered(v)
+    time.sleep(180)
 
 
 if __name__ == '__main__':
