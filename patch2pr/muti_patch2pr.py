@@ -865,6 +865,7 @@ def main():
 
     information = get_project_and_series_information()
     if len(information) == 0:
+        time.sleep(180)
         print("not a new series of patches which received by get-mail tool has been write to file")
         return
 
@@ -1014,7 +1015,6 @@ def main():
         os.remove("/home/patches/project_series.txt")
         # for v in RCFile_MAP.values():
         #     change_email_status_to_answered(v)
-    time.sleep(180)
 
 
 if __name__ == '__main__':
